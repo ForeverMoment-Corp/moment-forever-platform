@@ -37,7 +37,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
         "com.forvmom.data.entities",
         "com.forvmom.security.entities" // If security has entities
 })
-
+//test
 public class MomentForeverApp {
 
     /**
