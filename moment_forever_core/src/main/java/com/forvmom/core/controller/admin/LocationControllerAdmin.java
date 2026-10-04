@@ -344,6 +344,7 @@ public class LocationControllerAdmin {
         return ResponseEntity.ok(ResponseUtil.buildOkResponse(null, AppConstants.MSG_DELETED));
     }
 
+
     /**
      * Moves a location to a new 1-based display position, shifting the locations it
      * passes over so positions stay contiguous.
