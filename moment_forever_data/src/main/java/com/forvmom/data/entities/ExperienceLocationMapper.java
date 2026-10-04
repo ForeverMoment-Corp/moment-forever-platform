@@ -59,6 +59,9 @@ public class ExperienceLocationMapper {
     @Column(name = "deleted", nullable = false, columnDefinition = "boolean default false")
     private boolean deleted = false;
 
+    @Column(name = "pincode_restriction_type", length = 20)
+    private String pincodeRestrictionType = "WHITELIST";
+
     @CreationTimestamp
     @Column(name = "created_on", updatable = false)
     private Date createdOn;
@@ -69,7 +72,7 @@ public class ExperienceLocationMapper {
 
     /**
      * Timeslots attached to this experience-location combination.
-     * LAZY — only JOIN FETCHed when needed.
+     * LAZY â€” only JOIN FETCHed when needed.
      */
     @OneToMany(mappedBy = "experienceLocation", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<ExperienceTimeSlotMapper> timeSlotMappers = new HashSet<>();
@@ -78,12 +81,12 @@ public class ExperienceLocationMapper {
      * Pincode whitelist restricting where this experience-location attachment is
      * serviceable. Empty = unrestricted (serviceable at every pincode of the
      * location).
-     * LAZY — only JOIN FETCHed when needed.
+     * LAZY â€” only JOIN FETCHed when needed.
      */
     @OneToMany(mappedBy = "experienceLocationMapper", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<ExperienceLocationPincodeMapper> pincodeMappers = new HashSet<>();
 
-    // ── Getters & Setters ─────────────────────────────────────────────────────
+    // â”€â”€ Getters & Setters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public Long getId() {
         return id;
@@ -135,6 +138,14 @@ public class ExperienceLocationMapper {
 
     public LocalDate getValidTo() {
         return validTo;
+    }
+
+    public String getPincodeRestrictionType() {
+        return pincodeRestrictionType;
+    }
+
+    public void setPincodeRestrictionType(String pincodeRestrictionType) {
+        this.pincodeRestrictionType = pincodeRestrictionType;
     }
 
     public void setValidTo(LocalDate validTo) {
