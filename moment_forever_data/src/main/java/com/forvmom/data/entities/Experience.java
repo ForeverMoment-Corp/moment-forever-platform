@@ -72,6 +72,9 @@ public class Experience extends NamedEntity {
     @OneToMany(mappedBy = "experience", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<ExperienceMediaMapper> mediaMappers = new HashSet<>();
 
+    @OneToMany(mappedBy = "experience", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<ExperienceCouponMapper> couponMappers = new HashSet<>();
+
     public String getSlug() {
         return slug;
     }
@@ -204,6 +207,19 @@ public class Experience extends NamedEntity {
     /**
      * Adds a media mapper and wires both sides of the bidirectional relationship.
      */
+    public Set<ExperienceCouponMapper> getCouponMappers() {
+        return couponMappers;
+    }
+
+    public void setCouponMappers(Set<ExperienceCouponMapper> couponMappers) {
+        this.couponMappers = couponMappers;
+    }
+
+    public void addCouponMapper(ExperienceCouponMapper mapper) {
+        couponMappers.add(mapper);
+        mapper.setExperience(this);
+    }
+
     public void addMediaMapper(ExperienceMediaMapper mapper) {
         mediaMappers.add(mapper);
         mapper.setExperience(this);
