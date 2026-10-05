@@ -28,6 +28,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
  * @see com.forvmom.core.services.BookingOrchestrationService
  * @see com.forvmom.core.event_enrichment.BookingEnrichmentTask
  */
+//test
 @SpringBootApplication
 @EnableDiscoveryClient
 @ComponentScan(basePackages = {
