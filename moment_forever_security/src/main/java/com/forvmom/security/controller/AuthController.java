@@ -1,26 +1,20 @@
 package com.forvmom.security.controller;
 
-import com.forvmom.common.errorhandler.NotAllowedCustomException;
 import com.forvmom.common.response.ApiResponse;
 import com.forvmom.common.response.ResponseUtil;
-import com.forvmom.data.entities.auth.AuthUser;
 import com.forvmom.security.dto.AuthResponse;
-import com.forvmom.security.dto.JwtUserDetails;
+import com.forvmom.security.dto.GoogleSignInRequest;
 import com.forvmom.security.service.AuthService;
 import com.forvmom.security.dto.LoginRequest;
 import com.forvmom.security.dto.RegisterRequestDto;
+import com.forvmom.security.service.SocialAuthService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
-import static org.springframework.security.authorization.AuthorityAuthorizationManager.hasRole;
 
 //TODO: Email Based authentication, Password Reset, Account Verification, etc.
 @RestController
@@ -29,10 +23,12 @@ import static org.springframework.security.authorization.AuthorityAuthorizationM
 public class AuthController {
 
     private final AuthService authService;
+    private final SocialAuthService socialAuthService;
 
     @Autowired
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, SocialAuthService socialAuthService) {
         this.authService = authService;
+        this.socialAuthService = socialAuthService;
     }
 
     @PostMapping("/register")
@@ -52,6 +48,23 @@ public class AuthController {
         AuthResponse response = authService.login(request);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ResponseUtil.buildOkResponse(response, "User logged in successfully"));
+    }
+
+    /**
+     * Signs a user in with Google while still issuing the platform's own JWT and
+     * refresh-token pair.
+     *
+     * <p>
+     * The client authenticates with Google first and forwards the returned ID token
+     * to this endpoint. The backend verifies the token, links or provisions a
+     * local account, then creates a normal Moment Forever authenticated session.
+     */
+    @PostMapping("/social/google")
+    @Operation(summary = "Sign in with Google", description = "Verify a Google ID token, link or create the local account, and issue platform JWT tokens")
+    public ResponseEntity<ApiResponse<?>> signInWithGoogle(
+            @Valid @RequestBody GoogleSignInRequest request) {
+        AuthResponse response = socialAuthService.signInWithGoogle(request.getIdToken());
+        return ResponseEntity.ok(ResponseUtil.buildOkResponse(response, "Google sign-in successful"));
     }
 
     @PostMapping("/refresh")

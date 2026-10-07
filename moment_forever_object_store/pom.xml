@@ -47,6 +47,10 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.forvmom</groupId>
+            <artifactId>moment_forever_commons</artifactId>
+        </dependency>
 
         <!-- Spring Cloud AWS use its own BOM as version not managed by springboot
          for this we have added that dependency management and added version-

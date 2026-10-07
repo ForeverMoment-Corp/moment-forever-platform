@@ -1,7 +1,7 @@
 package com.forvmom.data.dao;
 
-import com.forvmom.common.errorhandler.ResourceNotFoundException;
 import com.forvmom.data.entities.ApplicationUser;
+import jakarta.persistence.NoResultException;
 import jakarta.persistence.TypedQuery;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +33,20 @@ public class ApplicationUserDaoImpl extends GenericDaoImpl<ApplicationUser, Long
     }
 
     @Override
+    public Optional<ApplicationUser> findByEmailIgnoreCaseIncludingDeleted(String email) {
+        try {
+            ApplicationUser user = (ApplicationUser) em.createNativeQuery(
+                            "SELECT * FROM application_users WHERE LOWER(email) = LOWER(:email) LIMIT 1",
+                            ApplicationUser.class)
+                    .setParameter("email", email)
+                    .getSingleResult();
+            return Optional.of(user);
+        } catch (NoResultException e) {
+            return Optional.empty();
+        }
+    }
+
+    @Override
     public Optional<ApplicationUser> findByAuthUserId(Long authUserId) {
         TypedQuery<ApplicationUser> query = em.createQuery(
                 "SELECT au FROM ApplicationUser au WHERE au.authUser.id = :authUserId",
@@ -42,7 +56,21 @@ public class ApplicationUserDaoImpl extends GenericDaoImpl<ApplicationUser, Long
         try {
             return Optional.of(query.getSingleResult());
         } catch (Exception e) {
-            throw new ResourceNotFoundException("ApplicationUser with authUserId " + authUserId + " not found");
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public Optional<ApplicationUser> findByAuthUserIdIncludingDeleted(Long authUserId) {
+        try {
+            ApplicationUser user = (ApplicationUser) em.createNativeQuery(
+                            "SELECT * FROM application_users WHERE auth_user_id = :authUserId LIMIT 1",
+                            ApplicationUser.class)
+                    .setParameter("authUserId", authUserId)
+                    .getSingleResult();
+            return Optional.of(user);
+        } catch (NoResultException e) {
+            return Optional.empty();
         }
     }
 

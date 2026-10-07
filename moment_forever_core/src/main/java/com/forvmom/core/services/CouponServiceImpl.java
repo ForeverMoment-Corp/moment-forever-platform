@@ -5,7 +5,7 @@ import com.forvmom.common.dto.request.CouponValidationRequestDto;
 import com.forvmom.common.dto.response.CouponResponseDto;
 import com.forvmom.common.dto.response.CouponValidationResponseDto;
 import com.forvmom.common.enums.DiscountType;
-import com.forvmom.common.errorhandler.CustomAuthException;
+import com.forvmom.common.errorhandler.ConflictException;
 import com.forvmom.common.errorhandler.ResourceNotFoundException;
 import com.forvmom.core.mapper.CouponBeanMapper;
 import com.forvmom.data.dao.CouponDao;
@@ -47,7 +47,7 @@ public class CouponServiceImpl implements CouponService {
     public CouponResponseDto createCoupon(CouponRequestDto dto) {
         String code = dto.getCode().trim().toUpperCase();
         if (couponDao.existsByCodeIgnoreCase(code)) {
-            throw new CustomAuthException("Coupon code already exists: " + code);
+            throw new ConflictException("Coupon code already exists: " + code);
         }
 
         Coupon coupon = CouponBeanMapper.mapDtoToEntity(dto);
@@ -67,7 +67,7 @@ public class CouponServiceImpl implements CouponService {
 
         String newCode = dto.getCode().trim().toUpperCase();
         if (!coupon.getCode().equalsIgnoreCase(newCode) && couponDao.existsByCodeIgnoreCase(newCode)) {
-            throw new CustomAuthException("Coupon code already exists: " + newCode);
+            throw new ConflictException("Coupon code already exists: " + newCode);
         }
 
         coupon.setCode(newCode);

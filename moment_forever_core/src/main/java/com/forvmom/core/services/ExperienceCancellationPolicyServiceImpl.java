@@ -2,6 +2,7 @@ package com.forvmom.core.services;
 
 import com.forvmom.common.dto.request.CancellationPolicyRequestDto;
 import com.forvmom.common.dto.response.CancellationPolicyResponseDto;
+import com.forvmom.common.errorhandler.ConflictException;
 import com.forvmom.common.errorhandler.ResourceNotFoundException;
 import com.forvmom.core.mapper.InclusionPolicyBeanMapper;
 import com.forvmom.data.dao.ExperienceCancellationPolicyDao;
@@ -143,7 +144,7 @@ public class ExperienceCancellationPolicyServiceImpl implements ExperienceCancel
     @Transactional
     public void attachToExperience(Long experienceId, Long policyId, Integer displayOrder) {
         if (policyMapperDao.existsByExperienceIdAndPolicyId(experienceId, policyId)) {
-            throw new IllegalStateException(
+            throw new ConflictException(
                     "Policy " + policyId + " is already attached to experience " + experienceId);
         }
         Experience experience = experienceDao.findById(experienceId);

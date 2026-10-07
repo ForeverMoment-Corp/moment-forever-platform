@@ -185,6 +185,13 @@ app:
     medium-size: 600x400
     large-size: 1200x800
 
+auth:
+  social:
+    google:
+      client-id: ${GOOGLE_OIDC_CLIENT_ID:}
+      issuer-uri: ${GOOGLE_OIDC_ISSUER:https://accounts.google.com}
+      jwk-set-uri: ${GOOGLE_OIDC_JWK_SET_URI:https://www.googleapis.com/oauth2/v3/certs}
+
 # ============================================
 # SLUG CONFIG
 # ============================================

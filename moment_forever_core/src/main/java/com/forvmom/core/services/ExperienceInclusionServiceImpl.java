@@ -2,6 +2,7 @@ package com.forvmom.core.services;
 
 import com.forvmom.common.dto.request.ExperienceInclusionRequestDto;
 import com.forvmom.common.dto.response.ExperienceInclusionResponseDto;
+import com.forvmom.common.errorhandler.ConflictException;
 import com.forvmom.common.errorhandler.ResourceNotFoundException;
 import com.forvmom.core.mapper.InclusionPolicyBeanMapper;
 import com.forvmom.data.dao.ExperienceDao;
@@ -144,7 +145,7 @@ public class ExperienceInclusionServiceImpl implements ExperienceInclusionServic
     @Transactional
     public void attachToExperience(Long experienceId, Long inclusionId, Integer displayOrder) {
         if (inclusionMapperDao.existsByExperienceIdAndInclusionId(experienceId, inclusionId)) {
-            throw new IllegalStateException(
+            throw new ConflictException(
                     "Inclusion " + inclusionId + " is already attached to experience " + experienceId);
         }
         Experience experience = experienceDao.findById(experienceId);

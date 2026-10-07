@@ -3,6 +3,7 @@ package com.forvmom.core.services;
 import com.forvmom.common.dto.request.VendorRequestDto;
 import com.forvmom.common.dto.response.VendorResponseDto;
 import com.forvmom.common.enums.VendorStatus;
+import com.forvmom.common.errorhandler.ConflictException;
 import com.forvmom.common.errorhandler.CustomAuthException;
 import com.forvmom.common.errorhandler.ResourceNotFoundException;
 import com.forvmom.core.mapper.VendorBeanMapper;
@@ -17,6 +18,7 @@ import com.forvmom.security.dto.JwtUserDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -55,7 +57,7 @@ public class VendorServiceImpl implements VendorService {
 
     private VendorResponseDto createVendorAccount(VendorRequestDto dto, VendorStatus status) {
         if (authUserDao.existsByUsername(dto.getContactEmail()) || vendorDao.existsByContactEmailIgnoreCase(dto.getContactEmail())) {
-            throw new CustomAuthException("Email already in use: " + dto.getContactEmail());
+            throw new ConflictException("Email already in use: " + dto.getContactEmail());
         }
 
         Role vendorRole = roleDao.findByNameIgnoreCase("VENDOR")
@@ -131,7 +133,7 @@ public class VendorServiceImpl implements VendorService {
 
         if (dto.getContactEmail() != null && !vendor.getContactEmail().equalsIgnoreCase(dto.getContactEmail())) {
             if (authUserDao.existsByUsername(dto.getContactEmail())) {
-                throw new CustomAuthException("Email already in use: " + dto.getContactEmail());
+                throw new ConflictException("Email already in use: " + dto.getContactEmail());
             }
             AuthUser authUser = vendor.getAuthUser();
             authUser.setUsername(dto.getContactEmail());
@@ -185,7 +187,7 @@ public class VendorServiceImpl implements VendorService {
         Long authUserId = getAuthenticatedAuthUserId();
         AuthUser authUser = authUserDao.findById(authUserId);
         if (authUser == null) {
-            throw new CustomAuthException("Authenticated user record not found");
+            throw new CustomAuthException("Authenticated user record not found", HttpStatus.UNAUTHORIZED);
         }
 
         Optional<Vendor> vendorOptional = vendorDao.findByAuthUserId(authUserId);
@@ -212,7 +214,7 @@ public class VendorServiceImpl implements VendorService {
 
         if (dto.getContactEmail() != null && !vendor.getContactEmail().equalsIgnoreCase(dto.getContactEmail())) {
             if (authUserDao.existsByUsername(dto.getContactEmail())) {
-                throw new CustomAuthException("Email already in use: " + dto.getContactEmail());
+                throw new ConflictException("Email already in use: " + dto.getContactEmail());
             }
             authUser.setUsername(dto.getContactEmail());
             authUserDao.save(authUser);
@@ -249,12 +251,12 @@ public class VendorServiceImpl implements VendorService {
     private Long getAuthenticatedAuthUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new CustomAuthException("No authenticated user");
+            throw new CustomAuthException("No authenticated user", HttpStatus.UNAUTHORIZED);
         }
         Object o = authentication.getPrincipal();
         Long authUserId = extractAuthUserId(o);
         if (authUserId == null) {
-            throw new CustomAuthException("Invalid principal type");
+            throw new CustomAuthException("Invalid principal type", HttpStatus.UNAUTHORIZED);
         }
         return authUserId;
     }

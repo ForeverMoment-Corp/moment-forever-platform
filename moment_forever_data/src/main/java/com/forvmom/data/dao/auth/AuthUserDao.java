@@ -16,6 +16,8 @@ public interface AuthUserDao extends GenericDao<AuthUser, Long> {
 
     Optional<AuthUser> findByUsername(String username);
 
+    Optional<AuthUser> findByUsernameIncludingDeleted(String username);
+
     boolean existsByUsername(String username);
 
     @Query("SELECT DISTINCT au FROM AuthUser au " +
@@ -29,6 +31,8 @@ public interface AuthUserDao extends GenericDao<AuthUser, Long> {
             "LEFT JOIN FETCH ur.role " +
             "WHERE au.id = :id")
     Optional<AuthUser> findByIdWithRoles(@Param("id") Long id);
+
+    Optional<AuthUser> findByIdIncludingDeleted(Long id);
 
     boolean existsByExternalUserId(Long externalUserId);
 

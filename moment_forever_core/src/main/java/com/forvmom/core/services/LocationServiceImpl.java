@@ -2,6 +2,7 @@ package com.forvmom.core.services;
 
 import com.forvmom.common.dto.request.*;
 import com.forvmom.common.dto.response.*;
+import com.forvmom.common.errorhandler.ConflictException;
 import com.forvmom.common.errorhandler.ResourceNotFoundException;
 import com.forvmom.core.mapper.ExperienceBeanMapper;
 import com.forvmom.core.mapper.LocationBeanMapper;
@@ -395,7 +396,7 @@ public class LocationServiceImpl implements LocationService {
             ExperienceLocationAttachRequestDto requestDto) {
 
         if (locationMapperDao.existsByExperienceIdAndLocationId(experienceId, locationId)) {
-            throw new IllegalStateException(
+            throw new ConflictException(
                     "Location " + locationId + " is already attached to experience " + experienceId);
         }
 
@@ -647,7 +648,7 @@ public class LocationServiceImpl implements LocationService {
     public CategoryLocationResponseDto attachCategoryToLocation(Long locationId, Long categoryId,
                                                                 CategoryLocationAttachRequestDto requestDto) {
         if (categoryLocationMapperDao.existsByCategoryIdAndLocationId(categoryId, locationId)) {
-            throw new IllegalStateException("Category " + categoryId + " is already attached to location " + locationId);
+            throw new ConflictException("Category " + categoryId + " is already attached to location " + locationId);
         }
 
         Location location = locationDao.findById(locationId);
@@ -790,7 +791,7 @@ public class LocationServiceImpl implements LocationService {
     public SubCategoryLocationResponseDto attachSubCategoryToLocation(Long locationId, Long subCategoryId,
                                                                       SubCategoryLocationAttachRequestDto requestDto) {
         if (subCategoryLocationMapperDao.existsBySubCategoryIdAndLocationId(subCategoryId, locationId)) {
-            throw new IllegalStateException("SubCategory " + subCategoryId + " is already attached to location " + locationId);
+            throw new ConflictException("SubCategory " + subCategoryId + " is already attached to location " + locationId);
         }
 
         Location location = locationDao.findById(locationId);

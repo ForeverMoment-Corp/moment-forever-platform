@@ -8,6 +8,7 @@ import com.forvmom.common.dto.response.BulkAttachAddonResultDto;
 import com.forvmom.common.dto.response.BulkAttachAddonResultDto.SkippedAddonDto;
 import com.forvmom.common.dto.response.BulkAttachAddonResultDto.SkippedAddonDto.Reason;
 import com.forvmom.common.dto.response.ExperienceAddonResponseDto;
+import com.forvmom.common.errorhandler.ConflictException;
 import com.forvmom.common.errorhandler.ResourceNotFoundException;
 import com.forvmom.core.mapper.AddonBeanMapper;
 import com.forvmom.data.dao.AddonDao;
@@ -141,7 +142,7 @@ public class AddonServiceImpl implements AddonService {
     public ExperienceAddonResponseDto attachToExperience(Long experienceId, Long addonId,
             BigDecimal priceOverride, Boolean isFree) {
         if (addonMapperDao.existsByExperienceIdAndAddonId(experienceId, addonId)) {
-            throw new IllegalStateException(
+            throw new ConflictException(
                     "Addon " + addonId + " is already attached to experience " + experienceId);
         }
 

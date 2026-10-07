@@ -1,5 +1,6 @@
 package com.forvmom.core.services;
 
+import com.forvmom.common.errorhandler.ConflictException;
 import com.forvmom.data.dao.ExperienceTimeSlotMapperDao;
 import com.forvmom.data.dao.SlotInventoryDao;
 import com.forvmom.data.entities.ExperienceTimeSlotMapper;
@@ -59,7 +60,7 @@ public class SlotInventoryService {
                 slotMapperId,
                 bookingDate);
         if (inventory == null || inventory.getBookedCount() < guestCount) {
-            throw new IllegalStateException(
+            throw new ConflictException(
                     "No matching inventory reservation for slotMapperId=" + slotMapperId
                             + ", bookingDate=" + bookingDate
                             + ", guestCount=" + guestCount);
@@ -81,14 +82,14 @@ public class SlotInventoryService {
         if (slotMapper == null
                 || !Boolean.TRUE.equals(slotMapper.getIsActive())
                 || !slotMapper.isValidOnDate(bookingDate)) {
-            throw new IllegalStateException(
+            throw new ConflictException(
                     "Time slot is missing, inactive, or invalid on date " + bookingDate);
         }
     }
 
     private void ensureCapacity(Integer maxCapacity, int currentlyBooked, int guestCount) {
         if (maxCapacity != null && currentlyBooked + guestCount > maxCapacity) {
-            throw new IllegalStateException(
+            throw new ConflictException(
                     "Time slot does not have enough capacity. Requested=" + guestCount
                             + ", booked=" + currentlyBooked
                             + ", maxCapacity=" + maxCapacity);

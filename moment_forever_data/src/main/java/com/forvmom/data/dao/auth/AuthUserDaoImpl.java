@@ -1,6 +1,5 @@
 package com.forvmom.data.dao.auth;
 
-import com.forvmom.common.errorhandler.ResourceNotFoundException;
 import com.forvmom.data.dao.GenericDaoImpl;
 import com.forvmom.data.entities.auth.AuthUser;
 import com.forvmom.data.entities.auth.AuthUserRole;
@@ -23,21 +22,35 @@ public class AuthUserDaoImpl extends GenericDaoImpl<AuthUser, Long> implements A
     @Override
     public Optional<AuthUser> findByUsername(String username) {
         TypedQuery<AuthUser> query = em.createQuery(
-                "SELECT a FROM AuthUser a WHERE a.username = :username",
+                "SELECT a FROM AuthUser a WHERE LOWER(a.username) = LOWER(:username)",
                 AuthUser.class);
         query.setParameter("username", username);
 
         try {
             return Optional.of(query.getSingleResult());
         } catch (NoResultException e) {
-            throw new ResourceNotFoundException("User not found with username: " + username);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public Optional<AuthUser> findByUsernameIncludingDeleted(String username) {
+        try {
+            AuthUser user = (AuthUser) em.createNativeQuery(
+                            "SELECT * FROM auth_users WHERE LOWER(username) = LOWER(:username) LIMIT 1",
+                            AuthUser.class)
+                    .setParameter("username", username)
+                    .getSingleResult();
+            return Optional.of(user);
+        } catch (NoResultException e) {
+            return Optional.empty();
         }
     }
 
     @Override
     public boolean existsByUsername(String username) {
         TypedQuery<Long> query = em.createQuery(
-                "SELECT COUNT(a) FROM AuthUser a WHERE a.username = :username",
+                "SELECT COUNT(a) FROM AuthUser a WHERE LOWER(a.username) = LOWER(:username)",
                 Long.class);
         query.setParameter("username", username);
 
@@ -80,6 +93,20 @@ public class AuthUserDaoImpl extends GenericDaoImpl<AuthUser, Long> implements A
                             "LEFT JOIN FETCH ur.role " +
                             "WHERE a.id = :id",
                     AuthUser.class)
+                    .setParameter("id", id)
+                    .getSingleResult();
+            return Optional.of(user);
+        } catch (NoResultException e) {
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public Optional<AuthUser> findByIdIncludingDeleted(Long id) {
+        try {
+            AuthUser user = (AuthUser) em.createNativeQuery(
+                            "SELECT * FROM auth_users WHERE id = :id",
+                            AuthUser.class)
                     .setParameter("id", id)
                     .getSingleResult();
             return Optional.of(user);

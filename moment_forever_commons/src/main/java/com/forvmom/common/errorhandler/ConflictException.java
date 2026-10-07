@@ -2,15 +2,15 @@ package com.forvmom.common.errorhandler;
 
 import org.springframework.http.HttpStatus;
 
-public class NotAllowedCustomException extends RuntimeException{
+public class ConflictException extends RuntimeException {
 
     private final HttpStatus status;
 
-    public NotAllowedCustomException(String message) {
-        this(message, HttpStatus.FORBIDDEN);
+    public ConflictException(String message) {
+        this(message, HttpStatus.CONFLICT);
     }
 
-    public NotAllowedCustomException(String message, HttpStatus status) {
+    public ConflictException(String message, HttpStatus status) {
         super(message);
         this.status = status;
     }

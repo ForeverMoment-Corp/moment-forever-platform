@@ -27,9 +27,6 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     ) throws IOException {
 
 
-        final String path = request.getRequestURI();
-        final String method = request.getMethod();
-
         log.warn("🚫 Unauthorized access | path={} | reason={}",
                 request.getRequestURI(),
                 authException.getClass().getSimpleName());
@@ -38,7 +35,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         response.setContentType("application/json");
 
         var apiResponse = ResponseUtil.buildErrorResponse(
-                "Unauthorized - Invalid or missing token",
+                "Authentication required or token is invalid",
                 HttpStatus.UNAUTHORIZED
         );
 

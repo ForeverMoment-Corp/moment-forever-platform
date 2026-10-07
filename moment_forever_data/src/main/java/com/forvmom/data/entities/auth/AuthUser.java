@@ -1,8 +1,8 @@
 package com.forvmom.data.entities.auth;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,7 +12,8 @@ import java.util.*;
 
 @Entity
 @Table(name = "auth_users")
-@SQLDelete(sql = "UPDATE application_users SET deleted = true WHERE id = ?")
+@SQLDelete(sql = "UPDATE auth_users SET deleted = true, enabled = false, account_non_locked = false, account_non_expired = false, credentials_non_expired = false WHERE id = ?")
+@Where(clause = "deleted = false")
 public class AuthUser implements UserDetails {
 
     @Id
@@ -45,6 +46,9 @@ public class AuthUser implements UserDetails {
 
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
+
+    @Column(name = "deleted", nullable = false, columnDefinition = "boolean default false")
+    private boolean deleted = false;
 
     @OneToMany(mappedBy = "authUser", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<AuthUserRole> userRoles = new HashSet<>();
@@ -135,6 +139,14 @@ public class AuthUser implements UserDetails {
 
     public void setLastLogin(LocalDateTime lastLogin) {
         this.lastLogin = lastLogin;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
     }
 
     public void setUserRoles(Set<AuthUserRole> userRoles) {

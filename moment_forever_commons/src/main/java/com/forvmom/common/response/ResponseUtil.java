@@ -31,7 +31,7 @@ public class ResponseUtil {
     public static <T> ApiResponse<T> buildErrorResponse(String message, HttpStatus status) {
         return ApiResponse.<T>builder()
                 .setCode(status.value())
-                .setStatus("INTERNAL_SERVER_ERROR")
+                .setStatus(resolveErrorStatus(status))
                 .setMsg(message)
                 .setResponse(null)
                 .build();
@@ -40,7 +40,7 @@ public class ResponseUtil {
     public static <T> ApiResponse<T> buildErrorResponse(String message, HttpStatus status, List<String> errors) {
         return ApiResponse.<T>builder()
                 .setCode(status.value())
-                .setStatus("VALIDATION_ERROR")
+                .setStatus(resolveErrorStatus(status))
                 .setMsg(message)
                 .setErrors(errors)
                 .setResponse(null)
@@ -48,12 +48,7 @@ public class ResponseUtil {
     }
 
     public static <T> ApiResponse<T> buildConflictResponse(String message) {
-        return ApiResponse.<T>builder()
-                .setCode(HttpStatus.CONFLICT.value())
-                .setStatus("CONFLICT")
-                .setMsg(message)
-                .setResponse(null)
-                .build();
+        return buildErrorResponse(message, HttpStatus.CONFLICT);
     }
 
     public static <T> ApiResponse<T> buildNotFoundResponse(String message) {
@@ -66,5 +61,9 @@ public class ResponseUtil {
 
     public static <T> ApiResponse<T> buildValidationErrorResponse(String msg, List<String> errors) {
         return buildErrorResponse(msg, HttpStatus.BAD_REQUEST, errors);
+    }
+
+    private static String resolveErrorStatus(HttpStatus status) {
+        return status.name();
     }
 }

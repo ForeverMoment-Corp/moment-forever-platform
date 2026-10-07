@@ -5,6 +5,7 @@ import com.forvmom.common.dto.response.CatalogMediaCarrier;
 import com.forvmom.common.dto.response.CategoryResponseDto;
 import com.forvmom.common.dto.response.ExperienceMediaResponseDto;
 import com.forvmom.common.dto.response.SubCategoryResponseDto;
+import com.forvmom.common.errorhandler.ConflictException;
 import com.forvmom.common.errorhandler.ResourceNotFoundException;
 import com.forvmom.core.config.ImageUrlConfig;
 import com.forvmom.core.mapper.CatalogMediaBeanMapper;
@@ -58,7 +59,7 @@ public class CatalogMediaService {
         Category category = findCategoryOrThrow(categoryId);
         Media media = findMediaOrThrow(mediaId);
         if (categoryMediaMapperDao.existsByCategoryIdAndMediaId(categoryId, mediaId)) {
-            throw new IllegalStateException("Media " + mediaId + " is already attached to category " + categoryId + ".");
+            throw new ConflictException("Media " + mediaId + " is already attached to category " + categoryId + ".");
         }
         if (Boolean.TRUE.equals(requestDto.getIsPrimary())) {
             demoteCategoryPrimary(categoryId);
@@ -137,7 +138,7 @@ public class CatalogMediaService {
         SubCategory subCategory = findSubCategoryOrThrow(subCategoryId);
         Media media = findMediaOrThrow(mediaId);
         if (subCategoryMediaMapperDao.existsBySubCategoryIdAndMediaId(subCategoryId, mediaId)) {
-            throw new IllegalStateException(
+            throw new ConflictException(
                     "Media " + mediaId + " is already attached to sub-category " + subCategoryId + ".");
         }
         if (Boolean.TRUE.equals(requestDto.getIsPrimary())) {
@@ -398,7 +399,7 @@ public class CatalogMediaService {
         if (media == null)
             throw new ResourceNotFoundException("Media not found: " + mediaId);
         if (!Boolean.TRUE.equals(media.getIsActive()))
-            throw new IllegalStateException("Media is inactive: " + mediaId);
+            throw new ConflictException("Media is inactive: " + mediaId);
         return media;
     }
 

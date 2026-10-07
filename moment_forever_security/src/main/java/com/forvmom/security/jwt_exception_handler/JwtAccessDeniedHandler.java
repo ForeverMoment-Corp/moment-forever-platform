@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
@@ -26,16 +27,18 @@ public class JwtAccessDeniedHandler implements AccessDeniedHandler {
             HttpServletResponse response,
             AccessDeniedException accessDeniedException
     ) throws IOException {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication == null ? "anonymous" : authentication.getName();
 
         log.warn("⛔ Access denied | user={} | path={}",
-                SecurityContextHolder.getContext().getAuthentication().getName(),
+                username,
                 request.getRequestURI());
 
         response.setStatus(HttpStatus.FORBIDDEN.value());
         response.setContentType("application/json");
 
         var apiResponse = ResponseUtil.buildErrorResponse(
-                "Forbidden - You don’t have permission",
+                "Forbidden - you do not have permission to perform this action",
                 HttpStatus.FORBIDDEN
         );
 

@@ -4,6 +4,7 @@ import com.forvmom.common.dto.request.BulkAttachMediaRequestDto;
 import com.forvmom.common.dto.request.ExperienceMediaAttachRequestDto;
 import com.forvmom.common.dto.response.BulkAttachMediaResultDto;
 import com.forvmom.common.dto.response.ExperienceMediaResponseDto;
+import com.forvmom.common.errorhandler.ConflictException;
 import com.forvmom.common.errorhandler.ResourceNotFoundException;
 import com.forvmom.core.config.ImageUrlConfig;
 import com.forvmom.core.mapper.ExperienceMediaBeanMapper;
@@ -58,7 +59,7 @@ public class ExperienceMediaService {
         Media media = findMediaOrThrow(mediaId);
 
         if (experienceMediaMapperDao.existsByExperienceIdAndMediaId(experienceId, mediaId)) {
-            throw new IllegalStateException(
+            throw new ConflictException(
                     "Media " + mediaId + " is already attached to experience " + experienceId + ".");
         }
 

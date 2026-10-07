@@ -2,15 +2,16 @@ package com.forvmom.core.services;
 
 import com.forvmom.common.dto.response.AdminAppUserResponseDto;
 import com.forvmom.common.dto.response.RoleResponseDto;
-import com.forvmom.common.errorhandler.CustomAuthException;
+import com.forvmom.common.errorhandler.ConflictException;
 import com.forvmom.common.errorhandler.ResourceNotFoundException;
 import com.forvmom.common.dto.request.UserProfileRequestDto;
 import com.forvmom.core.mapper.ApplicationUserBeanMapper;
 import com.forvmom.core.mapper.RoleBeanMapper;
 import com.forvmom.data.dao.ApplicationUserDao;
 import com.forvmom.data.dao.auth.AuthUserDao;
-import com.forvmom.data.dao.auth.AuthUserRoleDao;
+import com.forvmom.data.dao.auth.RefreshTokenDao;
 import com.forvmom.data.entities.ApplicationUser;
+import com.forvmom.data.entities.auth.RefreshToken;
 import com.forvmom.data.entities.auth.AuthUserRole;
 import com.forvmom.data.entities.auth.Role;
 import com.forvmom.data.dao.auth.RoleDao;
@@ -58,10 +59,10 @@ public class AdminUserService {
     private AuthUserDao authUserDao;
 
     @Autowired
-    private AuthUserRoleDao authUserRoleDao;
+    private AuthService authService;
 
     @Autowired
-    private AuthService authService;
+    private RefreshTokenDao refreshTokenDao;
 
     @Autowired
     private RoleDao roleDao;
@@ -163,8 +164,19 @@ public class AdminUserService {
         if (existing == null) {
             throw new ResourceNotFoundException("No such user for given Id exist " + userId);
         }
+        String normalizedEmail = normalizeEmail(userDto.getEmail());
+        if (!existing.getEmail().equalsIgnoreCase(normalizedEmail)) {
+            Optional<ApplicationUser> existingUserWithEmail = applicationUserDao.findByEmailIgnoreCase(normalizedEmail);
+            if (existingUserWithEmail.isPresent() && !existingUserWithEmail.get().getId().equals(existing.getId())) {
+                throw new ConflictException("Email already in use: " + normalizedEmail);
+            }
+            existing.getAuthUser().setUsername(normalizedEmail);
+            existing.setEmail(normalizedEmail);
+        }
+
         // map only updatable fields
         ApplicationUserBeanMapper.mapDtoToEntity(userDto, existing);
+        existing.setEmail(normalizedEmail);
 
         // Handle Role Update if provided
         if (userDto.getRoleId() != null) {
@@ -219,8 +231,7 @@ public class AdminUserService {
     // }
 
     /**
-     * Deletes only the application user's profile row, leaving the associated
-     * authentication account in place.
+     * Soft-deletes the profile together with the linked authentication account.
      *
      * @param userId the application user identifier
      * @throws CustomAuthException if no profile exists for the given id
@@ -230,9 +241,11 @@ public class AdminUserService {
         ApplicationUser userProfile = applicationUserDao.findById(userId);
         if (userProfile == null) {
             logger.warn("Delete profile failed: AppUser not found - {}", userId);
-            throw new CustomAuthException("AppUser not found for id: " + userId);
+            throw new ResourceNotFoundException("AppUser not found for id: " + userId);
         }
+        revokeAllRefreshTokens(userProfile.getAuthUser().getId());
         applicationUserDao.delete(userProfile);
+        authUserDao.delete(userProfile.getAuthUser());
         logger.info("User Profile deleted successfully for userId: {}", userId);
     }
 
@@ -248,18 +261,26 @@ public class AdminUserService {
         ApplicationUser userProfile = applicationUserDao.findById(userId);
         if (userProfile == null) {
             logger.warn("Delete Account failed: AppUser not found - {}", userId);
-            throw new CustomAuthException("AppUser not found for id: " + userId);
+            throw new ResourceNotFoundException("AppUser not found for id: " + userId);
         }
         AuthUser authUser = userProfile.getAuthUser();
-        // Soft delete the application user profile
+        revokeAllRefreshTokens(authUser.getId());
         applicationUserDao.delete(userProfile);
         authUserDao.delete(authUser);
 
-        // Note: AuthUser remains active but unlinked from profile (unless cascaded).
-        // If AuthUser should be disabled or deleted, logic should be added here.
-        // For now, adhering to soft delete of ApplicationUser.
-
         logger.info("User Account (Profile) deleted successfully for userId: {}", userId);
+    }
+
+    private void revokeAllRefreshTokens(Long authUserId) {
+        List<RefreshToken> tokens = refreshTokenDao.findByAuthUserIdAndRevokedFalse(authUserId);
+        tokens.forEach(token -> {
+            token.setRevoked(true);
+            refreshTokenDao.save(token);
+        });
+    }
+
+    private String normalizeEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase();
     }
 
     // @Transactional

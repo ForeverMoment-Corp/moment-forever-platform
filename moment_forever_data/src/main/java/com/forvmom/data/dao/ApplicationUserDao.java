@@ -16,11 +16,15 @@ public interface ApplicationUserDao extends GenericDao<ApplicationUser, Long> {
      */
     Optional<ApplicationUser> findByEmailIgnoreCase(String email);
 
+    Optional<ApplicationUser> findByEmailIgnoreCaseIncludingDeleted(String email);
+
     /**
      * Find ApplicationUser by auth_user_id
      * This is the CRITICAL link between AuthUser and ApplicationUser
      */
     Optional<ApplicationUser> findByAuthUserId(Long authUserId);
+
+    Optional<ApplicationUser> findByAuthUserIdIncludingDeleted(Long authUserId);
 
     /**
      * Check if email already exists (case-insensitive)

@@ -2,6 +2,7 @@ package com.forvmom.core.services;
 
 import com.forvmom.common.dto.request.PromotionAssetRequestDto;
 import com.forvmom.common.dto.response.PromotionImageResponseDto;
+import com.forvmom.common.errorhandler.ConflictException;
 import com.forvmom.common.errorhandler.ResourceNotFoundException;
 import com.forvmom.core.config.ImageUrlConfig;
 import com.forvmom.data.dao.MediaDao;
@@ -145,7 +146,7 @@ public class PromotionAssetServiceImpl implements PromotionAssetService {
             throw new ResourceNotFoundException("Media not found: " + mediaId);
         }
         if (!Boolean.TRUE.equals(media.getIsActive())) {
-            throw new IllegalStateException("Media is inactive: " + mediaId);
+            throw new ConflictException("Media is inactive: " + mediaId);
         }
         return media;
     }

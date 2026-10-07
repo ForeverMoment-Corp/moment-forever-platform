@@ -1,5 +1,6 @@
 package com.forvmom.core.services;
 
+import com.forvmom.common.errorhandler.ConflictException;
 import com.forvmom.data.dao.BookingReservationDao;
 import com.forvmom.data.entities.BookingReservation;
 import org.springframework.stereotype.Service;
@@ -43,7 +44,7 @@ public class BookingReservationService {
         BookingReservation reservation = bookingReservationDao.findById(bookingReferenceId);
 
         if (reservation == null) {
-            throw new IllegalStateException(
+            throw new ConflictException(
                     "Booking reservation not found: " + bookingReferenceId);
         }
 
@@ -57,7 +58,7 @@ public class BookingReservationService {
             if (BookingReservation.STATUS_RELEASED.equals(reservation.getStatus())) {
                 return false;
             }
-            throw new IllegalStateException(
+            throw new ConflictException(
                     "Booking reservation could not be released from status "
                             + reservation.getStatus() + ": " + bookingReferenceId);
         }
@@ -90,7 +91,7 @@ public class BookingReservationService {
         if (!Objects.equals(reservation.getSlotMapperId(), expectedSlotMapperId)
                 || !Objects.equals(reservation.getBookingDate(), expectedBookingDate)
                 || !Objects.equals(reservation.getGuestCount(), expectedGuestCount)) {
-            throw new IllegalStateException(
+            throw new ConflictException(
                     "Booking failure details do not match reservation: "
                             + reservation.getBookingReferenceId());
         }

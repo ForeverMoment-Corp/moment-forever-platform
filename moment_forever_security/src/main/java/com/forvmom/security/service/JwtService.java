@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -291,7 +292,7 @@ public class JwtService {
             // Step 4: Rebuild AuthUser from DB (never from the token)
             // Use optimized query to fetch roles eagerly
             AuthUser authUser = authUserDao.findByIdWithRoles(claims.get("userId", Long.class))
-                    .orElseThrow(() -> new CustomAuthException("User not found from refresh token"));
+                    .orElseThrow(() -> new CustomAuthException("User not found from refresh token", HttpStatus.UNAUTHORIZED));
 
             // 4. HASH incoming refresh token
             String tokenHash = hashToken(token);
@@ -303,12 +304,12 @@ public class JwtService {
                 storedToken = refreshTokenDao
                         .findByTokenHashAndRevokedFalse(tokenHash);
             } catch (Exception e) {
-                throw new CustomAuthException("Refresh token expired");
+                throw new CustomAuthException("Refresh token expired", HttpStatus.UNAUTHORIZED);
             }
 
             // 6. Check expiry in DB (extra safety)
             if (storedToken.getExpiryDate().isBefore(LocalDateTime.now())) {
-                throw new CustomAuthException("Refresh token expired");
+                throw new CustomAuthException("Refresh token expired", HttpStatus.UNAUTHORIZED);
             }
 
             // 7. Revoke OLD refresh token (rotation)
@@ -324,7 +325,7 @@ public class JwtService {
 
         } catch (Exception e) {
             logger.debug("Failed to generate token from refresh token: {}", e.getMessage());
-            throw new CustomAuthException("Invalid refresh token");
+            throw new CustomAuthException("Invalid refresh token", HttpStatus.UNAUTHORIZED);
         }
     }
 
@@ -335,7 +336,7 @@ public class JwtService {
         RefreshToken storedToken = refreshTokenDao
                 .findByTokenHashAndRevokedFalse(tokenHash);
         if (storedToken == null) {
-            throw new CustomAuthException("Invalid refresh token");
+            throw new CustomAuthException("Invalid refresh token", HttpStatus.UNAUTHORIZED);
         }
         storedToken.setRevoked(true);
         refreshTokenDao.save(storedToken);

@@ -1,8 +1,9 @@
 package com.forvmom.core.services;
 
-import com.forvmom.common.errorhandler.CustomAuthException;
 import com.forvmom.common.dto.response.AppUserResponseDto;
 import com.forvmom.common.dto.request.UserProfileRequestDto;
+import com.forvmom.common.errorhandler.ConflictException;
+import com.forvmom.common.errorhandler.CustomAuthException;
 import com.forvmom.common.errorhandler.ResourceNotFoundException;
 import com.forvmom.core.mapper.ApplicationUserBeanMapper;
 import com.forvmom.data.dao.ApplicationUserDao;
@@ -13,11 +14,11 @@ import com.forvmom.data.entities.auth.AuthUser;
 import com.forvmom.data.entities.auth.RefreshToken;
 import com.forvmom.security.config.PasswordConfig;
 import com.forvmom.security.dto.JwtUserDetails;
-import com.forvmom.security.service.JwtService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -53,9 +54,6 @@ public class UserProfileService {
 
     @Autowired
     private RefreshTokenDao refreshTokenDao;
-
-    @Autowired
-    private JwtService jwtService;
 
     @Autowired
     private PasswordConfig passwordEncoder;
@@ -98,13 +96,13 @@ public class UserProfileService {
     public AppUserResponseDto updateCurrentUserProfile(@Valid UserProfileRequestDto userProfileRequestDto) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new CustomAuthException("No authenticated user");
+            throw new CustomAuthException("No authenticated user", HttpStatus.UNAUTHORIZED);
         }
 
         Object o = authentication.getPrincipal();
         Long authUserId = extractAuthUserId(o);
         if (authUserId == null) {
-            throw new CustomAuthException("Invalid principal type");
+            throw new CustomAuthException("Invalid principal type", HttpStatus.UNAUTHORIZED);
         }
 
         Optional<ApplicationUser> applicationUser = applicationUserDao.findByAuthUserId(authUserId);
@@ -112,27 +110,31 @@ public class UserProfileService {
             throw new ResourceNotFoundException("User doesn't exist in System");
         }
 
+        ApplicationUser currentUser = applicationUser.get();
+        String normalizedEmail = normalizeEmail(userProfileRequestDto.getEmail());
+
         // Update fields
-        applicationUser.get().setFullName(userProfileRequestDto.getFullName());
+        currentUser.setFullName(userProfileRequestDto.getFullName());
 
         // Sync email change with AuthUser
-        if (!applicationUser.get().getEmail().equalsIgnoreCase(userProfileRequestDto.getEmail())) {
-            if (authUserDao.existsByUsername(userProfileRequestDto.getEmail())) {
-                throw new CustomAuthException("Email already in use: " + userProfileRequestDto.getEmail());
+        if (!currentUser.getEmail().equalsIgnoreCase(normalizedEmail)) {
+            Optional<ApplicationUser> existingUserWithEmail = applicationUserDao.findByEmailIgnoreCase(normalizedEmail);
+            if (existingUserWithEmail.isPresent() && !existingUserWithEmail.get().getId().equals(currentUser.getId())) {
+                throw new ConflictException("Email already in use: " + normalizedEmail);
             }
-            AuthUser authUser = applicationUser.get().getAuthUser();
-            authUser.setUsername(userProfileRequestDto.getEmail());
+            AuthUser authUser = currentUser.getAuthUser();
+            authUser.setUsername(normalizedEmail);
             authUserDao.save(authUser);
-            applicationUser.get().setEmail(userProfileRequestDto.getEmail());
+            currentUser.setEmail(normalizedEmail);
         }
 
-        applicationUser.get().setPhoneNumber(userProfileRequestDto.getPhoneNumber());
-        applicationUser.get().setProfilePictureUrl(userProfileRequestDto.getProfilePictureUrl());
-        applicationUser.get().setDateOfBirth(userProfileRequestDto.getDateOfBirth());
-        applicationUser.get().setPreferredCity(userProfileRequestDto.getPreferredCity());
+        currentUser.setPhoneNumber(userProfileRequestDto.getPhoneNumber());
+        currentUser.setProfilePictureUrl(userProfileRequestDto.getProfilePictureUrl());
+        currentUser.setDateOfBirth(userProfileRequestDto.getDateOfBirth());
+        currentUser.setPreferredCity(userProfileRequestDto.getPreferredCity());
 
         // Save updated user
-        ApplicationUser updatedUser = applicationUserDao.update(applicationUser.get());
+        ApplicationUser updatedUser = applicationUserDao.update(currentUser);
         return ApplicationUserBeanMapper.mapEntityToDto(updatedUser);
     }
 
@@ -147,13 +149,13 @@ public class UserProfileService {
     public AppUserResponseDto getCurrentUserProfile() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new CustomAuthException("No authenticated user");
+            throw new CustomAuthException("No authenticated user", HttpStatus.UNAUTHORIZED);
         }
 
         Object o = authentication.getPrincipal();
         Long authUserId = extractAuthUserId(o);
         if (authUserId == null) {
-            throw new CustomAuthException("Invalid principal type");
+            throw new CustomAuthException("Invalid principal type", HttpStatus.UNAUTHORIZED);
         }
 
         Optional<ApplicationUser> applicationUser = applicationUserDao.findByAuthUserId(authUserId);
@@ -164,12 +166,13 @@ public class UserProfileService {
     }
 
     /**
-     * Permanently deletes the authenticated user's account.
+     * Soft-deletes the authenticated user's profile and linked auth account.
      *
      * <p>
-     * Deletion targets the {@code AuthUser}; the {@link ApplicationUser} is removed
-     * by cascade. The password is re-verified first because a valid session alone
-     * is not sufficient authorisation for an irreversible action.
+     * The password is re-verified first because a valid session alone is not
+     * sufficient authorisation for an irreversible action. Refresh tokens are
+     * revoked in the same transaction so deleted accounts cannot continue minting
+     * new access tokens.
      *
      * @param password the caller's current password, for re-authentication
      * @throws CustomAuthException       if unauthenticated or the password is wrong
@@ -178,13 +181,13 @@ public class UserProfileService {
     public void deleteCurrentUserProfile(String password) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new CustomAuthException("No authenticated user");
+            throw new CustomAuthException("No authenticated user", HttpStatus.UNAUTHORIZED);
         }
 
         Object o = authentication.getPrincipal();
         Long authUserId = extractAuthUserId(o);
         if (authUserId == null) {
-            throw new CustomAuthException("Invalid principal type");
+            throw new CustomAuthException("Invalid principal type", HttpStatus.UNAUTHORIZED);
         }
 
         Optional<ApplicationUser> applicationUser = applicationUserDao.findByAuthUserId(authUserId);
@@ -195,8 +198,10 @@ public class UserProfileService {
         // Verify password before deletion against AuthUser entity
         AuthUser authUser = applicationUser.get().getAuthUser();
         if (!passwordEncoder.passwordEncoder().matches(password, authUser.getPassword())) {
-            throw new CustomAuthException("Invalid password");
+            throw new CustomAuthException("Invalid password", HttpStatus.UNAUTHORIZED);
         }
+        revokeAllRefreshTokens(authUser.getId());
+        applicationUserDao.delete(applicationUser.get());
         authUserDao.delete(authUser);
     }
 
@@ -217,13 +222,13 @@ public class UserProfileService {
     public void deactivateCurrentAccount(String refreshToken) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new CustomAuthException("No authenticated user");
+            throw new CustomAuthException("No authenticated user", HttpStatus.UNAUTHORIZED);
         }
 
         Object o = authentication.getPrincipal();
         Long authUserId = extractAuthUserId(o);
         if (authUserId == null) {
-            throw new CustomAuthException("Invalid principal type");
+            throw new CustomAuthException("Invalid principal type", HttpStatus.UNAUTHORIZED);
         }
         Optional<ApplicationUser> applicationUser = applicationUserDao.findByAuthUserId(authUserId);
         if (applicationUser.isEmpty()) {
@@ -241,5 +246,17 @@ public class UserProfileService {
             refreshTokenDao.save(token);
         });
         logger.info("User account deActivated successfully for userId: {}", authUser.getUsername());
+    }
+
+    private void revokeAllRefreshTokens(Long authUserId) {
+        List<RefreshToken> tokens = refreshTokenDao.findByAuthUserIdAndRevokedFalse(authUserId);
+        tokens.forEach(token -> {
+            token.setRevoked(true);
+            refreshTokenDao.save(token);
+        });
+    }
+
+    private String normalizeEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase();
     }
 }

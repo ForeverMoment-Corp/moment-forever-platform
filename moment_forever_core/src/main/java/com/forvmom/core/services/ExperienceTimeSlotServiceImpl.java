@@ -9,6 +9,7 @@ import com.forvmom.common.dto.response.BulkAttachTimeSlotsResultDto.SkippedTimeS
 import com.forvmom.common.dto.response.BulkAttachTimeSlotsResultDto.SkippedTimeSlotDto.Reason;
 import com.forvmom.common.dto.response.ExperienceTimeSlotResponseDto;
 import com.forvmom.common.dto.response.TimeSlotResponseDto;
+import com.forvmom.common.errorhandler.ConflictException;
 import com.forvmom.common.errorhandler.ResourceNotFoundException;
 import com.forvmom.core.mapper.TimeSlotBeanMapper;
 import com.forvmom.data.dao.*;
@@ -262,7 +263,7 @@ public class ExperienceTimeSlotServiceImpl implements ExperienceTimeSlotService 
         ExperienceLocationMapper expLocation = expLocationMapperDao.findOrCreate(experience, location);
 
         if (timeSlotMapperDao.existsByExperienceLocationIdAndTimeSlotId(expLocation.getId(), timeSlotId)) {
-            throw new IllegalStateException(
+            throw new ConflictException(
                     "TimeSlot " + timeSlotId + " is already attached to this experience-location.");
         }
 
