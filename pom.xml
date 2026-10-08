@@ -53,6 +53,16 @@
                 <artifactId>moment_forever_core</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.forvmom</groupId>
+                <artifactId>moment_forever_security</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.forvmom</groupId>
+                <artifactId>moment_forever_object_store</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
 
                 <!-- External JWT & Security (WITH VERSIONS) -->
