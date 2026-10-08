@@ -1,5 +1,6 @@
 package com.forvmom.core.services;
 
+import com.forvmom.common.errorhandler.ConflictException;
 import com.forvmom.data.dao.ExperienceTimeSlotMapperDao;
 import com.forvmom.data.dao.SlotInventoryDao;
 import com.forvmom.data.entities.ExperienceTimeSlotMapper;
@@ -76,7 +77,7 @@ class SlotInventoryServiceTest {
                 .thenReturn(inventory);
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictException.class,
                 () -> service.reserveCapacity(100L, BOOKING_DATE, 4));
 
         assertEquals(18, inventory.getBookedCount());

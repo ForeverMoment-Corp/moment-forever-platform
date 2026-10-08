@@ -1,5 +1,6 @@
 package com.forvmom.core.services;
 
+import com.forvmom.common.errorhandler.ConflictException;
 import com.forvmom.data.dao.BookingReservationDao;
 import com.forvmom.data.entities.BookingReservation;
 import org.junit.jupiter.api.BeforeEach;
@@ -93,7 +94,7 @@ class BookingReservationServiceTest {
         when(bookingReservationDao.findById(BOOKING_ID)).thenReturn(reservation);
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictException.class,
                 () -> service.releaseOnce(
                         BOOKING_ID,
                         SLOT_MAPPER_ID,
@@ -115,7 +116,7 @@ class BookingReservationServiceTest {
         when(bookingReservationDao.findById(BOOKING_ID)).thenReturn(null);
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictException.class,
                 () -> service.releaseOnce(
                         BOOKING_ID,
                         SLOT_MAPPER_ID,
