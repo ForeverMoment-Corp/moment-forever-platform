@@ -31,6 +31,7 @@ public class AuthController {
         this.socialAuthService = socialAuthService;
     }
 
+
     @PostMapping("/register")
     @Operation(summary = "Register User", description = "Register a new user account")
     public ResponseEntity<ApiResponse<?>> register(

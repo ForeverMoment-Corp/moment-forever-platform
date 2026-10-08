@@ -5,6 +5,7 @@ import com.forvmom.common.response.ResponseUtil;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.ResponseEntity;
@@ -144,7 +145,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
         String supportedMethods = ex.getSupportedHttpMethods() == null
                 ? ""
-                : ex.getSupportedHttpMethods().stream().map(Enum::name).collect(Collectors.joining(", "));
+                : ex.getSupportedHttpMethods().stream().map(Object::toString).collect(Collectors.joining(", "));
         String message = supportedMethods.isBlank()
                 ? "HTTP method '" + ex.getMethod() + "' is not supported for this endpoint"
                 : "HTTP method '" + ex.getMethod() + "' is not supported for this endpoint. Supported methods: "

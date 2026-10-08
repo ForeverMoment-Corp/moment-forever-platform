@@ -86,6 +86,8 @@ public class BookingEnrichmentTask {
                     payloadParser.parse(bookingOutbox);
             BookingSnapshotBundle snapshots =
                     snapshotResolver.resolve(payload);
+            // pricing logic - this will come from booking request DTO
+            //with simple dobule as data type
             BookingPricingSummary pricing =
                     pricingCalculator.calculate(
                             payload,

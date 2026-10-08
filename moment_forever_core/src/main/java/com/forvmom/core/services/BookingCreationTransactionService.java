@@ -69,7 +69,7 @@ public class BookingCreationTransactionService {
             BookingRequestDto bookingRequest,
             Long userId
     ) {
-        // TO DO:since we are checking the idempotency of request in BookingOrchestrationService, we can remove this check here and also remove the claim parameter from this method.
+        // TODO:since we are checking the idempotency of request in BookingOrchestrationService, we can remove this check here and also remove the claim parameter from this method.
         // Lock the idempotency row so only the current request owner can create data.
         BookingRequestIdempotency idempotencyRequest =
                 bookingRequestIdempotencyDao.findForUpdate(

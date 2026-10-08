@@ -44,7 +44,7 @@ public class SlotInventoryService {
             inventory = new SlotInventory();
             inventory.setSlotMapper(slotMapper);
             inventory.setBookingDate(bookingDate);
-            inventory.setBookedCount(guestCount);
+            inventory.setBookedCount(guestCount);// we can consider it as same experience need 2 times guestcount=2?
             slotInventoryDao.save(inventory);
             return;
         }
