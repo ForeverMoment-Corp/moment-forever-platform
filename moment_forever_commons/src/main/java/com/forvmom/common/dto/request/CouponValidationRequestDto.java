@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
 
+
 public class CouponValidationRequestDto {
 
     @NotBlank(message = "Coupon code is required")
