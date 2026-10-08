@@ -1,7 +1,6 @@
 package com.forvmom.core.controller.admin;
 
 import com.forvmom.common.dto.request.ReorderRequestDto;
-import com.forvmom.common.dto.response.CategoryLocationResponseDto;
 import com.forvmom.common.response.ApiResponse;
 import com.forvmom.common.response.ResponseUtil;
 import com.forvmom.common.utils.AppConstants;
@@ -10,7 +9,6 @@ import com.forvmom.common.dto.response.CategoryResponseDto;
 import com.forvmom.core.services.CategoryService;
 import com.forvmom.core.services.ReorderingService;
 import com.forvmom.data.entities.Category;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -180,6 +180,8 @@ public class ExperienceDaoImpl extends GenericDaoImpl<Experience, Long> implemen
         return em.createQuery(
                 "SELECT DISTINCT e FROM Experience e " +
                         "LEFT JOIN FETCH e.detail " +
+                        "LEFT JOIN FETCH e.subCategory sc " +
+                        "LEFT JOIN FETCH sc.category c " +
                         "WHERE e.isFeatured = true AND e.isActive = true " +
                         "ORDER BY e.displayOrder ASC",
                 Experience.class)

@@ -31,7 +31,8 @@ public class ExperienceLocationMapperDaoImpl extends GenericDaoImpl<ExperienceLo
         @Override
         public List<ExperienceLocationMapper> findByLocationId(Long locationId) {
                 return em.createQuery(
-                                "SELECT m FROM ExperienceLocationMapper m " +
+                                "SELECT DISTINCT m FROM ExperienceLocationMapper m " +
+                                                "JOIN FETCH m.location l " +
                                                 "JOIN FETCH m.experience e " +
                                                 "WHERE m.location.id = :locId AND m.deleted = false",
                                 ExperienceLocationMapper.class)
