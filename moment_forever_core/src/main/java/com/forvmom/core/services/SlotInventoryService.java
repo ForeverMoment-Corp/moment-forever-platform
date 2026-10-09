@@ -33,6 +33,10 @@ public class SlotInventoryService {
         ExperienceTimeSlotMapper slotMapper = slotMapperDao.findById(slotMapperId);
         validateSlotMapper(slotMapper, bookingDate);
 
+        // first time booking came, we see there is no record in inventory
+        // so we creat
+
+
         SlotInventory inventory = slotInventoryDao.findBySlotMapperIdAndBookingDate(
                 slotMapperId,
                 bookingDate);

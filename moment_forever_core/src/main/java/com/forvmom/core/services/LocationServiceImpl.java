@@ -4,16 +4,17 @@ import com.forvmom.common.dto.request.*;
 import com.forvmom.common.dto.response.*;
 import com.forvmom.common.errorhandler.ConflictException;
 import com.forvmom.common.errorhandler.ResourceNotFoundException;
+import com.forvmom.core.mapper.CategoryBeanMapper;
 import com.forvmom.core.mapper.ExperienceBeanMapper;
 import com.forvmom.core.mapper.LocationBeanMapper;
+import com.forvmom.core.mapper.SubCategoryBeanMapper;
 import com.forvmom.data.dao.*;
 import com.forvmom.data.entities.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -69,6 +70,9 @@ public class LocationServiceImpl implements LocationService {
 
     @Autowired
     private SubCategoryLocationMapperDao subCategoryLocationMapperDao;
+
+    @Autowired
+    private CatalogMediaService catalogMediaService;
 
     /**
      * {@inheritDoc}
@@ -752,23 +756,57 @@ public class LocationServiceImpl implements LocationService {
      * {@inheritDoc}
      *
      * <p>
-     * Projects each active mapping into a flat DTO of category id, name, slug and
-     * the mapping's display order.
+     * Returns full category DTOs with media URLs, display order and nested sub-categories
+     * active for the location.
      *
      * @param locationId the location identifier
      * @return the active categories for that location, or an empty list
      */
     @Override
     @Transactional(readOnly = true)
-    public List<CategoryByLocationDto> getActiveCategoriesByLocation(Long locationId) {
+    public List<CategoryResponseDto> getActiveCategoriesByLocation(Long locationId) {
         List<CategoryLocationMapper> mappers = categoryLocationMapperDao.findActiveByLocationId(locationId);
-        return mappers.stream()
-                .map(m -> new CategoryByLocationDto(
-                        m.getCategory().getId(),
-                        m.getCategory().getName(),
-                        m.getCategory().getSlug(),
-                        m.getDisplayOrder()))
+        if (mappers == null || mappers.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // Fetch location-active sub-categories to nest under categories
+        List<SubCategoryLocationMapper> subCatMappers = subCategoryLocationMapperDao.findActiveByLocationId(locationId);
+        Map<Long, List<SubCategoryResponseDto>> subCatsByCatId = new HashMap<>();
+        if (subCatMappers != null && !subCatMappers.isEmpty()) {
+            subCatsByCatId = subCatMappers.stream()
+                    .map(m -> {
+                        SubCategoryResponseDto dto = SubCategoryBeanMapper.mapEntityToDto(m.getSubCategory());
+                        if (dto != null) {
+                            dto.setDisplayOrder(Long.valueOf(m.getDisplayOrder()));
+                        }
+                        return dto;
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.groupingBy(SubCategoryResponseDto::getCategoryId));
+        }
+
+        final Map<Long, List<SubCategoryResponseDto>> finalSubCatsMap = subCatsByCatId;
+        List<CategoryResponseDto> responses = mappers.stream()
+                .map(m -> {
+                    CategoryResponseDto dto = CategoryBeanMapper.mapEntityToDto(m.getCategory());
+                    if (dto != null) {
+                        dto.setDisplayOrder(Long.valueOf(m.getDisplayOrder()));
+                        if (finalSubCatsMap.containsKey(m.getCategory().getId())) {
+                            dto.setSubCategories(finalSubCatsMap.get(m.getCategory().getId()));
+                        } else if (dto.getSubCategories() != null) {
+                            dto.setSubCategories(dto.getSubCategories().stream()
+                                    .filter(s -> Boolean.TRUE.equals(s.getIsActive()))
+                                    .collect(Collectors.toList()));
+                        }
+                    }
+                    return dto;
+                })
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+
+        catalogMediaService.enrichCategoryResponses(responses);
+        return responses;
     }
 
     /**
@@ -894,34 +932,38 @@ public class LocationServiceImpl implements LocationService {
      * {@inheritDoc}
      *
      * <p>
-     * Projects each active mapping into a flat DTO carrying the sub-category id,
-     * name and slug, its parent category id and name, and the mapping's display
-     * order.
+     * Returns full sub-category DTOs with media details URLs, parent category info,
+     * and display order.
      *
      * @param locationId the location identifier
      * @return the active sub-categories for that location, or an empty list
      */
     @Override
     @Transactional(readOnly = true)
-    public List<SubCategoryByLocationDto> getActiveSubCategoriesByLocation(Long locationId) {
+    public List<SubCategoryResponseDto> getActiveSubCategoriesByLocation(Long locationId) {
         List<SubCategoryLocationMapper> mappers = subCategoryLocationMapperDao.findActiveByLocationId(locationId);
-        return mappers.stream()
-                .map(m -> new SubCategoryByLocationDto(
-                        m.getSubCategory().getId(),
-                        m.getSubCategory().getName(),
-                        m.getSubCategory().getSlug(),
-                        m.getSubCategory().getCategory().getId(),
-                        m.getSubCategory().getCategory().getName(),
-                        m.getDisplayOrder()))
+        if (mappers == null || mappers.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<SubCategoryResponseDto> responses = mappers.stream()
+                .map(m -> {
+                    SubCategoryResponseDto dto = SubCategoryBeanMapper.mapEntityToDto(m.getSubCategory());
+                    if (dto != null) {
+                        dto.setDisplayOrder(Long.valueOf(m.getDisplayOrder()));
+                    }
+                    return dto;
+                })
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+        catalogMediaService.enrichSubCategoryResponses(responses);
+        return responses;
     }
 
     /**
      * {@inheritDoc}
      *
      * <p>
-     * Same projection as {@link #getActiveSubCategoriesByLocation(Long)} but
-     * restricted to a single parent category by the DAO query.
+     * Same as {@link #getActiveSubCategoriesByLocation(Long)} but restricted to a single parent category.
      *
      * @param locationId the location identifier
      * @param categoryId the parent category identifier
@@ -929,17 +971,23 @@ public class LocationServiceImpl implements LocationService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<SubCategoryByLocationDto> getActiveSubCategoriesByLocationAndCategory(Long locationId, Long categoryId) {
+    public List<SubCategoryResponseDto> getActiveSubCategoriesByLocationAndCategory(Long locationId, Long categoryId) {
         List<SubCategoryLocationMapper> mappers = subCategoryLocationMapperDao.findActiveByLocationIdAndCategoryId(locationId, categoryId);
-        return mappers.stream()
-                .map(m -> new SubCategoryByLocationDto(
-                        m.getSubCategory().getId(),
-                        m.getSubCategory().getName(),
-                        m.getSubCategory().getSlug(),
-                        m.getSubCategory().getCategory().getId(),
-                        m.getSubCategory().getCategory().getName(),
-                        m.getDisplayOrder()))
+        if (mappers == null || mappers.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<SubCategoryResponseDto> responses = mappers.stream()
+                .map(m -> {
+                    SubCategoryResponseDto dto = SubCategoryBeanMapper.mapEntityToDto(m.getSubCategory());
+                    if (dto != null) {
+                        dto.setDisplayOrder(Long.valueOf(m.getDisplayOrder()));
+                    }
+                    return dto;
+                })
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+        catalogMediaService.enrichSubCategoryResponses(responses);
+        return responses;
     }
 
 }

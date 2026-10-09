@@ -266,13 +266,13 @@ public interface LocationService {
     void toggleCategoryAttachmentActive(Long mapperId);
 
     /**
-     * Public catalog query: the active categories offered at a location, in a
-     * lightweight shape carrying id, name, slug and display order.
+     * Public catalog query: the active categories offered at a location, with full
+     * details, media URLs, and nested sub-categories.
      *
      * @param locationId the location identifier
      * @return the active categories for that location
      */
-    List<CategoryByLocationDto> getActiveCategoriesByLocation(Long locationId); // public
+    List<CategoryResponseDto> getActiveCategoriesByLocation(Long locationId); // public
 
     /// //////////sub-category association with location
     /**
@@ -322,20 +322,20 @@ public interface LocationService {
 
     /**
      * Public catalog query: the active sub-categories offered at a location,
-     * including their parent category id and name.
+     * including their media details URLs and parent category info.
      *
      * @param locationId the location identifier
      * @return the active sub-categories for that location
      */
-    List<SubCategoryByLocationDto> getActiveSubCategoriesByLocation(Long locationId);
+    List<SubCategoryResponseDto> getActiveSubCategoriesByLocation(Long locationId);
 
     /**
      * Public catalog query: the active sub-categories offered at a location that
-     * belong to a specific parent category.
+     * belong to a specific parent category, including media details URLs.
      *
      * @param locationId the location identifier
      * @param categoryId the parent category identifier
      * @return the matching active sub-categories
      */
-    List<SubCategoryByLocationDto> getActiveSubCategoriesByLocationAndCategory(Long locationId, Long categoryId);
+    List<SubCategoryResponseDto> getActiveSubCategoriesByLocationAndCategory(Long locationId, Long categoryId);
 }

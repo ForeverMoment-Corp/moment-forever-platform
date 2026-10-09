@@ -1,10 +1,10 @@
 package com.forvmom.core.controller.pub;
 
-import com.forvmom.common.dto.request.CategoryByLocationDto;
+import com.forvmom.common.dto.response.CategoryResponseDto;
 import com.forvmom.common.dto.response.ExperienceLocationResponseDto;
 import com.forvmom.common.dto.response.LocationResponseDto;
 import com.forvmom.common.dto.response.PincodeResponseDto;
-import com.forvmom.common.dto.response.SubCategoryByLocationDto;
+import com.forvmom.common.dto.response.SubCategoryResponseDto;
 import com.forvmom.common.response.ApiResponse;
 import com.forvmom.common.response.ResponseUtil;
 import com.forvmom.common.utils.AppConstants;
@@ -94,14 +94,14 @@ public class LocationController {
      * @param locationId identifier of the location
      * @param categoryId optional parent category filter; when {@code null} all
      *                   active sub-categories of the location are returned
-     * @return {@code 200 OK} wrapping the list of {@link SubCategoryByLocationDto}
+     * @return {@code 200 OK} wrapping the list of {@link SubCategoryResponseDto}
      */
     @GetMapping("/{locationId}/subcategories")
     @Operation(summary = "Get active subcategories for a location", description = "Optionally filter by categoryId")
-    public ResponseEntity<ApiResponse<List<SubCategoryByLocationDto>>> getSubCategoriesByLocation(
+    public ResponseEntity<ApiResponse<List<SubCategoryResponseDto>>> getSubCategoriesByLocation(
             @PathVariable Long locationId,
             @RequestParam(required = false) Long categoryId) {
-        List<SubCategoryByLocationDto> list;
+        List<SubCategoryResponseDto> list;
         if (categoryId != null) {
             list = locationService.getActiveSubCategoriesByLocationAndCategory(locationId, categoryId);
         } else {
@@ -114,13 +114,13 @@ public class LocationController {
      * Lists the categories that are active for a location.
      *
      * @param locationId identifier of the location
-     * @return {@code 200 OK} wrapping the list of {@link CategoryByLocationDto}
+     * @return {@code 200 OK} wrapping the list of {@link CategoryResponseDto}
      */
     @GetMapping("/{locationId}/categories")
     @Operation(summary = "Get active categories for a location")
-    public ResponseEntity<ApiResponse<List<CategoryByLocationDto>>> getCategoriesByLocation(
+    public ResponseEntity<ApiResponse<List<CategoryResponseDto>>> getCategoriesByLocation(
             @PathVariable Long locationId) {
-        List<CategoryByLocationDto> list = locationService.getActiveCategoriesByLocation(locationId);
+        List<CategoryResponseDto> list = locationService.getActiveCategoriesByLocation(locationId);
         return ResponseEntity.ok(ResponseUtil.buildOkResponse(list, AppConstants.MSG_FETCHED));
     }
 
