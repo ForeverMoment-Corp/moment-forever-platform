@@ -1,4 +1,4 @@
-package com.forvmom.core.controller.pub;
+package com.forvmom.core.controller.user;
 
 import com.forvmom.common.dto.request.BookingRequestDto;
 import com.forvmom.core.idempotency.request.model.BookingInitiationResult;
@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
  * @see BookingOrchestrationService
  */
 @RestController
-@RequestMapping("/public/bookings")
+@RequestMapping("/user/booking")
 @Tag(name = "Booking API", description = "Endpoints for creating booking requests")
 public class BookingController {
 
