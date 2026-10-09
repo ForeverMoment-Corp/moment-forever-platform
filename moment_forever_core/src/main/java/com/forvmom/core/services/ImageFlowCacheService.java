@@ -137,6 +137,65 @@ public class ImageFlowCacheService {
         putExperienceListPayload(experienceListSubCategoryPageKey(subCategoryId, page, size), response);
     }
 
+    // ---------------------------------------------------------------------------
+    // LOCATION + CATEGORY / SUBCATEGORY LIST KEYS (added Oct-2026)
+    // See C:\manishshrma\EXPERIENCE-LOCATION-CATEGORY-APIS-PROPOSAL.md
+    // All keys live under exp:list:* so the existing evictExperienceLists()
+    // (pattern exp:list:*) clears them together with the older list keys.
+    // ---------------------------------------------------------------------------
+
+    public List<ExperienceHighlightResponseDto> getExperienceListByLocation(Long locationId) {
+        return getExperienceListPayload(experienceListLocationKey(locationId));
+    }
+
+    public void putExperienceListByLocation(Long locationId, List<ExperienceHighlightResponseDto> response) {
+        putExperienceListPayload(experienceListLocationKey(locationId), response);
+    }
+
+    public List<ExperienceHighlightResponseDto> getExperienceListFeaturedByLocation(Long locationId) {
+        return getExperienceListPayload(experienceListFeaturedLocationKey(locationId));
+    }
+
+    public void putExperienceListFeaturedByLocation(Long locationId, List<ExperienceHighlightResponseDto> response) {
+        putExperienceListPayload(experienceListFeaturedLocationKey(locationId), response);
+    }
+
+    public List<ExperienceHighlightResponseDto> getExperienceListByLocationAndCategory(Long locationId, Long categoryId) {
+        return getExperienceListPayload(experienceListLocationCategoryKey(locationId, categoryId));
+    }
+
+    public void putExperienceListByLocationAndCategory(Long locationId, Long categoryId,
+            List<ExperienceHighlightResponseDto> response) {
+        putExperienceListPayload(experienceListLocationCategoryKey(locationId, categoryId), response);
+    }
+
+    public List<ExperienceHighlightResponseDto> getExperienceListFeaturedByLocationAndCategory(Long locationId, Long categoryId) {
+        return getExperienceListPayload(experienceListFeaturedLocationCategoryKey(locationId, categoryId));
+    }
+
+    public void putExperienceListFeaturedByLocationAndCategory(Long locationId, Long categoryId,
+            List<ExperienceHighlightResponseDto> response) {
+        putExperienceListPayload(experienceListFeaturedLocationCategoryKey(locationId, categoryId), response);
+    }
+
+    public List<ExperienceHighlightResponseDto> getExperienceListByLocationAndSubCategory(Long locationId, Long subCategoryId) {
+        return getExperienceListPayload(experienceListLocationSubCategoryKey(locationId, subCategoryId));
+    }
+
+    public void putExperienceListByLocationAndSubCategory(Long locationId, Long subCategoryId,
+            List<ExperienceHighlightResponseDto> response) {
+        putExperienceListPayload(experienceListLocationSubCategoryKey(locationId, subCategoryId), response);
+    }
+
+    public List<ExperienceHighlightResponseDto> getExperienceListFeaturedByLocationAndSubCategory(Long locationId, Long subCategoryId) {
+        return getExperienceListPayload(experienceListFeaturedLocationSubCategoryKey(locationId, subCategoryId));
+    }
+
+    public void putExperienceListFeaturedByLocationAndSubCategory(Long locationId, Long subCategoryId,
+            List<ExperienceHighlightResponseDto> response) {
+        putExperienceListPayload(experienceListFeaturedLocationSubCategoryKey(locationId, subCategoryId), response);
+    }
+
     public void evictExperienceLists() {
         Set<String> keys = redis.keys("exp:list:*");
         if (keys == null || keys.isEmpty()) {
@@ -324,6 +383,40 @@ public class ImageFlowCacheService {
             return "exp:list:subcategory:none:v2:page:" + page + ":size:" + size;
         }
         return "exp:list:subcategory:" + subCategoryId + ":v2:page:" + page + ":size:" + size;
+    }
+
+    // ---------------------------------------------------------------------------
+    // LOCATION + CATEGORY / SUBCATEGORY KEY BUILDERS (added Oct-2026)
+    // ---------------------------------------------------------------------------
+
+    private String experienceListLocationKey(Long locationId) {
+        if (locationId == null) {
+            return "exp:list:location:none:v2:all";
+        }
+        return "exp:list:location:" + locationId + ":v2:all";
+    }
+
+    private String experienceListFeaturedLocationKey(Long locationId) {
+        if (locationId == null) {
+            return "exp:list:location:none:featured:v2:all";
+        }
+        return "exp:list:location:" + locationId + ":featured:v2:all";
+    }
+
+    private String experienceListLocationCategoryKey(Long locationId, Long categoryId) {
+        return "exp:list:location:" + locationId + ":category:" + categoryId + ":v2:all";
+    }
+
+    private String experienceListFeaturedLocationCategoryKey(Long locationId, Long categoryId) {
+        return "exp:list:location:" + locationId + ":category:" + categoryId + ":featured:v2:all";
+    }
+
+    private String experienceListLocationSubCategoryKey(Long locationId, Long subCategoryId) {
+        return "exp:list:location:" + locationId + ":subcategory:" + subCategoryId + ":v2:all";
+    }
+
+    private String experienceListFeaturedLocationSubCategoryKey(Long locationId, Long subCategoryId) {
+        return "exp:list:location:" + locationId + ":subcategory:" + subCategoryId + ":featured:v2:all";
     }
 
     private String imageResolveKey(String storageFileName) {

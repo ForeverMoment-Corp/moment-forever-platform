@@ -199,4 +199,125 @@ public class ExperienceDaoImpl extends GenericDaoImpl<Experience, Long> implemen
                 Experience.class)
                 .getResultList();
     }
+
+    // ---------------------------------------------------------------------------
+    // LOCATION + CATEGORY / SUBCATEGORY CATALOG QUERIES (added Oct-2026)
+    // See C:\manishshrma\EXPERIENCE-LOCATION-CATEGORY-APIS-PROPOSAL.md
+    // Pattern mirrors findAllActive/findFeatured: JOIN the locationMappers
+    // junction (mapper must be active), filter on the experience side, fetch
+    // detail + subCategory (+ parent category) to avoid N+1 on card mapping.
+    // ---------------------------------------------------------------------------
+
+    @Override
+    public List<Experience> findActiveByLocationId(Long locationId) {
+        return em.createQuery(
+                "SELECT DISTINCT e FROM Experience e " +
+                        "JOIN e.locationMappers lm " +
+                        "LEFT JOIN FETCH e.detail " +
+                        "LEFT JOIN FETCH e.subCategory sc " +
+                        "LEFT JOIN FETCH sc.category c " +
+                        "WHERE lm.location.id = :locationId " +
+                        "AND lm.isActive = true " +
+                        "AND e.isActive = true " +
+                        "ORDER BY e.displayOrder ASC",
+                Experience.class)
+                .setParameter("locationId", locationId)
+                .getResultList();
+    }
+
+    @Override
+    public List<Experience> findFeaturedByLocationId(Long locationId) {
+        return em.createQuery(
+                "SELECT DISTINCT e FROM Experience e " +
+                        "JOIN e.locationMappers lm " +
+                        "LEFT JOIN FETCH e.detail " +
+                        "LEFT JOIN FETCH e.subCategory sc " +
+                        "LEFT JOIN FETCH sc.category c " +
+                        "WHERE lm.location.id = :locationId " +
+                        "AND lm.isActive = true " +
+                        "AND e.isActive = true " +
+                        "AND e.isFeatured = true " +
+                        "ORDER BY e.displayOrder ASC",
+                Experience.class)
+                .setParameter("locationId", locationId)
+                .getResultList();
+    }
+
+    @Override
+    public List<Experience> findActiveByLocationAndCategory(Long locationId, Long categoryId) {
+        return em.createQuery(
+                "SELECT DISTINCT e FROM Experience e " +
+                        "JOIN e.locationMappers lm " +
+                        "LEFT JOIN FETCH e.detail " +
+                        "LEFT JOIN FETCH e.subCategory sc " +
+                        "LEFT JOIN FETCH sc.category c " +
+                        "WHERE lm.location.id = :locationId " +
+                        "AND lm.isActive = true " +
+                        "AND e.isActive = true " +
+                        "AND sc.category.id = :categoryId " +
+                        "ORDER BY e.displayOrder ASC",
+                Experience.class)
+                .setParameter("locationId", locationId)
+                .setParameter("categoryId", categoryId)
+                .getResultList();
+    }
+
+    @Override
+    public List<Experience> findFeaturedByLocationAndCategory(Long locationId, Long categoryId) {
+        return em.createQuery(
+                "SELECT DISTINCT e FROM Experience e " +
+                        "JOIN e.locationMappers lm " +
+                        "LEFT JOIN FETCH e.detail " +
+                        "LEFT JOIN FETCH e.subCategory sc " +
+                        "LEFT JOIN FETCH sc.category c " +
+                        "WHERE lm.location.id = :locationId " +
+                        "AND lm.isActive = true " +
+                        "AND e.isActive = true " +
+                        "AND e.isFeatured = true " +
+                        "AND sc.category.id = :categoryId " +
+                        "ORDER BY e.displayOrder ASC",
+                Experience.class)
+                .setParameter("locationId", locationId)
+                .setParameter("categoryId", categoryId)
+                .getResultList();
+    }
+
+    @Override
+    public List<Experience> findActiveByLocationAndSubCategory(Long locationId, Long subCategoryId) {
+        return em.createQuery(
+                "SELECT DISTINCT e FROM Experience e " +
+                        "JOIN e.locationMappers lm " +
+                        "LEFT JOIN FETCH e.detail " +
+                        "LEFT JOIN FETCH e.subCategory sc " +
+                        "LEFT JOIN FETCH sc.category c " +
+                        "WHERE lm.location.id = :locationId " +
+                        "AND lm.isActive = true " +
+                        "AND e.isActive = true " +
+                        "AND e.subCategory.id = :subCategoryId " +
+                        "ORDER BY e.displayOrder ASC",
+                Experience.class)
+                .setParameter("locationId", locationId)
+                .setParameter("subCategoryId", subCategoryId)
+                .getResultList();
+    }
+
+    @Override
+    public List<Experience> findFeaturedByLocationAndSubCategory(Long locationId, Long subCategoryId) {
+        return em.createQuery(
+                "SELECT DISTINCT e FROM Experience e " +
+                        "JOIN e.locationMappers lm " +
+                        "LEFT JOIN FETCH e.detail " +
+                        "LEFT JOIN FETCH e.subCategory sc " +
+                        "LEFT JOIN FETCH sc.category c " +
+                        "WHERE lm.location.id = :locationId " +
+                        "AND lm.isActive = true " +
+                        "AND e.isActive = true " +
+                        "AND e.isFeatured = true " +
+                        "AND e.subCategory.id = :subCategoryId " +
+                        "ORDER BY e.displayOrder ASC",
+                Experience.class)
+                .setParameter("locationId", locationId)
+                .setParameter("subCategoryId", subCategoryId)
+                .getResultList();
+    }
 }

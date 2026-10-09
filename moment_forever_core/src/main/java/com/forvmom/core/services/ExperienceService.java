@@ -66,6 +66,50 @@ public interface ExperienceService {
      */
     List<ExperienceHighlightResponseDto> getFeatured(String pincodeCode);
 
+    // ---------------------------------------------------------------------------
+    // LOCATION + CATEGORY / SUBCATEGORY CATALOG QUERIES (added Oct-2026)
+    // See C:\manishshrma\EXPERIENCE-LOCATION-CATEGORY-APIS-PROPOSAL.md
+    // Every method has a no-pincode overload plus a pincode-filtered overload,
+    // mirroring getBySubCategory/subCategory+pincode above. Empty result is an
+    // empty list (never 404) so storefront rails render empty instead of failing.
+    // ---------------------------------------------------------------------------
+
+    /** Active experiences attached to a location (highlight cards). */
+    List<ExperienceHighlightResponseDto> getByLocation(Long locationId);
+
+    /** Active experiences attached to a location, narrowed to a pincode. */
+    List<ExperienceHighlightResponseDto> getByLocation(Long locationId, String pincodeCode);
+
+    /** Featured active experiences attached to a location. */
+    List<ExperienceHighlightResponseDto> getFeaturedByLocation(Long locationId);
+
+    /** Featured active experiences attached to a location, narrowed to a pincode. */
+    List<ExperienceHighlightResponseDto> getFeaturedByLocation(Long locationId, String pincodeCode);
+
+    /** Active experiences for a location + parent category. */
+    List<ExperienceHighlightResponseDto> getByLocationAndCategory(Long locationId, Long categoryId);
+
+    /** Active experiences for a location + parent category, narrowed to a pincode. */
+    List<ExperienceHighlightResponseDto> getByLocationAndCategory(Long locationId, Long categoryId, String pincodeCode);
+
+    /** Featured experiences for a location + parent category. */
+    List<ExperienceHighlightResponseDto> getFeaturedByLocationAndCategory(Long locationId, Long categoryId);
+
+    /** Featured experiences for a location + parent category, narrowed to a pincode. */
+    List<ExperienceHighlightResponseDto> getFeaturedByLocationAndCategory(Long locationId, Long categoryId, String pincodeCode);
+
+    /** Active experiences for a location + sub-category. */
+    List<ExperienceHighlightResponseDto> getByLocationAndSubCategory(Long locationId, Long subCategoryId);
+
+    /** Active experiences for a location + sub-category, narrowed to a pincode. */
+    List<ExperienceHighlightResponseDto> getByLocationAndSubCategory(Long locationId, Long subCategoryId, String pincodeCode);
+
+    /** Featured experiences for a location + sub-category. */
+    List<ExperienceHighlightResponseDto> getFeaturedByLocationAndSubCategory(Long locationId, Long subCategoryId);
+
+    /** Featured experiences for a location + sub-category, narrowed to a pincode. */
+    List<ExperienceHighlightResponseDto> getFeaturedByLocationAndSubCategory(Long locationId, Long subCategoryId, String pincodeCode);
+
     boolean deleteExperience(Long id);
 
     void toggleActive(Long id);

@@ -33,4 +33,24 @@ public interface ExperienceDao extends GenericDao<Experience, Long> {
     List<Experience> findFeatured();
 
     List<Experience> findAllActive();
+
+    // ---------------------------------------------------------------------------
+    // LOCATION + CATEGORY / SUBCATEGORY CATALOG QUERIES (added Oct-2026)
+    // See C:\manishshrma\EXPERIENCE-LOCATION-CATEGORY-APIS-PROPOSAL.md
+    // All queries return active experiences attached (active mapper) to the
+    // given location, ordered by displayOrder. Featured variants add
+    // e.isFeatured = true. Empty result = empty list (never null).
+    // ---------------------------------------------------------------------------
+
+    List<Experience> findActiveByLocationId(Long locationId);
+
+    List<Experience> findFeaturedByLocationId(Long locationId);
+
+    List<Experience> findActiveByLocationAndCategory(Long locationId, Long categoryId);
+
+    List<Experience> findFeaturedByLocationAndCategory(Long locationId, Long categoryId);
+
+    List<Experience> findActiveByLocationAndSubCategory(Long locationId, Long subCategoryId);
+
+    List<Experience> findFeaturedByLocationAndSubCategory(Long locationId, Long subCategoryId);
 }

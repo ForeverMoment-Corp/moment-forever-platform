@@ -440,6 +440,188 @@ public class ExperienceServiceImpl implements ExperienceService {
         return filterByPincode(highlights, pincodeCode);
     }
 
+    // ---------------------------------------------------------------------------
+    // LOCATION + CATEGORY / SUBCATEGORY CATALOG QUERIES (added Oct-2026)
+    // See C:\manishshrma\EXPERIENCE-LOCATION-CATEGORY-APIS-PROPOSAL.md
+    // Same recipe as getAllActive/getBySubCategory/getFeatured above: cached
+    // highlight list -> DAO ordered by displayOrder -> card images ->
+    // cache-put -> filterByPincode. Empty DAO result returns an empty list.
+    // ---------------------------------------------------------------------------
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ExperienceHighlightResponseDto> getByLocation(Long locationId) {
+        return getByLocation(locationId, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ExperienceHighlightResponseDto> getByLocation(Long locationId, String pincodeCode) {
+        List<ExperienceHighlightResponseDto> cached = imageFlowCacheService.getExperienceListByLocation(locationId);
+        List<ExperienceHighlightResponseDto> highlights;
+        if (cached != null) {
+            logger.info("Cache hit: experience list key exp:list:location:{}:v2:all", locationId);
+            highlights = cached;
+        } else {
+            logger.info("Cache miss: experience list key exp:list:location:{}:v2:all; loading from DB", locationId);
+
+            List<Experience> experiences = experienceDao.findActiveByLocationId(locationId);
+            if (experiences == null || experiences.isEmpty())
+                return new ArrayList<>();
+            highlights = experiences.stream()
+                    .map(ExperienceBeanMapper::mapEntityToHighlightDto)
+                    .collect(Collectors.toList());
+            enrichHighlightsWithCardImages(highlights);
+            imageFlowCacheService.putExperienceListByLocation(locationId, highlights);
+        }
+        return filterByPincode(highlights, pincodeCode);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ExperienceHighlightResponseDto> getFeaturedByLocation(Long locationId) {
+        return getFeaturedByLocation(locationId, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ExperienceHighlightResponseDto> getFeaturedByLocation(Long locationId, String pincodeCode) {
+        List<ExperienceHighlightResponseDto> cached = imageFlowCacheService.getExperienceListFeaturedByLocation(locationId);
+        List<ExperienceHighlightResponseDto> highlights;
+        if (cached != null) {
+            logger.info("Cache hit: experience list key exp:list:location:{}:featured:v2:all", locationId);
+            highlights = cached;
+        } else {
+            logger.info("Cache miss: experience list key exp:list:location:{}:featured:v2:all; loading from DB", locationId);
+
+            List<Experience> experiences = experienceDao.findFeaturedByLocationId(locationId);
+            if (experiences == null || experiences.isEmpty())
+                return new ArrayList<>();
+            highlights = experiences.stream()
+                    .map(ExperienceBeanMapper::mapEntityToHighlightDto)
+                    .collect(Collectors.toList());
+            enrichHighlightsWithCardImages(highlights);
+            imageFlowCacheService.putExperienceListFeaturedByLocation(locationId, highlights);
+        }
+        return filterByPincode(highlights, pincodeCode);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ExperienceHighlightResponseDto> getByLocationAndCategory(Long locationId, Long categoryId) {
+        return getByLocationAndCategory(locationId, categoryId, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ExperienceHighlightResponseDto> getByLocationAndCategory(Long locationId, Long categoryId, String pincodeCode) {
+        List<ExperienceHighlightResponseDto> cached = imageFlowCacheService.getExperienceListByLocationAndCategory(locationId, categoryId);
+        List<ExperienceHighlightResponseDto> highlights;
+        if (cached != null) {
+            logger.info("Cache hit: experience list key exp:list:location:{}:category:{}:v2:all", locationId, categoryId);
+            highlights = cached;
+        } else {
+            logger.info("Cache miss: experience list key exp:list:location:{}:category:{}:v2:all; loading from DB", locationId, categoryId);
+
+            List<Experience> experiences = experienceDao.findActiveByLocationAndCategory(locationId, categoryId);
+            if (experiences == null || experiences.isEmpty())
+                return new ArrayList<>();
+            highlights = experiences.stream()
+                    .map(ExperienceBeanMapper::mapEntityToHighlightDto)
+                    .collect(Collectors.toList());
+            enrichHighlightsWithCardImages(highlights);
+            imageFlowCacheService.putExperienceListByLocationAndCategory(locationId, categoryId, highlights);
+        }
+        return filterByPincode(highlights, pincodeCode);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ExperienceHighlightResponseDto> getFeaturedByLocationAndCategory(Long locationId, Long categoryId) {
+        return getFeaturedByLocationAndCategory(locationId, categoryId, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ExperienceHighlightResponseDto> getFeaturedByLocationAndCategory(Long locationId, Long categoryId, String pincodeCode) {
+        List<ExperienceHighlightResponseDto> cached = imageFlowCacheService.getExperienceListFeaturedByLocationAndCategory(locationId, categoryId);
+        List<ExperienceHighlightResponseDto> highlights;
+        if (cached != null) {
+            logger.info("Cache hit: experience list key exp:list:location:{}:category:{}:featured:v2:all", locationId, categoryId);
+            highlights = cached;
+        } else {
+            logger.info("Cache miss: experience list key exp:list:location:{}:category:{}:featured:v2:all; loading from DB", locationId, categoryId);
+
+            List<Experience> experiences = experienceDao.findFeaturedByLocationAndCategory(locationId, categoryId);
+            if (experiences == null || experiences.isEmpty())
+                return new ArrayList<>();
+            highlights = experiences.stream()
+                    .map(ExperienceBeanMapper::mapEntityToHighlightDto)
+                    .collect(Collectors.toList());
+            enrichHighlightsWithCardImages(highlights);
+            imageFlowCacheService.putExperienceListFeaturedByLocationAndCategory(locationId, categoryId, highlights);
+        }
+        return filterByPincode(highlights, pincodeCode);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ExperienceHighlightResponseDto> getByLocationAndSubCategory(Long locationId, Long subCategoryId) {
+        return getByLocationAndSubCategory(locationId, subCategoryId, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ExperienceHighlightResponseDto> getByLocationAndSubCategory(Long locationId, Long subCategoryId, String pincodeCode) {
+        List<ExperienceHighlightResponseDto> cached = imageFlowCacheService.getExperienceListByLocationAndSubCategory(locationId, subCategoryId);
+        List<ExperienceHighlightResponseDto> highlights;
+        if (cached != null) {
+            logger.info("Cache hit: experience list key exp:list:location:{}:subcategory:{}:v2:all", locationId, subCategoryId);
+            highlights = cached;
+        } else {
+            logger.info("Cache miss: experience list key exp:list:location:{}:subcategory:{}:v2:all; loading from DB", locationId, subCategoryId);
+
+            List<Experience> experiences = experienceDao.findActiveByLocationAndSubCategory(locationId, subCategoryId);
+            if (experiences == null || experiences.isEmpty())
+                return new ArrayList<>();
+            highlights = experiences.stream()
+                    .map(ExperienceBeanMapper::mapEntityToHighlightDto)
+                    .collect(Collectors.toList());
+            enrichHighlightsWithCardImages(highlights);
+            imageFlowCacheService.putExperienceListByLocationAndSubCategory(locationId, subCategoryId, highlights);
+        }
+        return filterByPincode(highlights, pincodeCode);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ExperienceHighlightResponseDto> getFeaturedByLocationAndSubCategory(Long locationId, Long subCategoryId) {
+        return getFeaturedByLocationAndSubCategory(locationId, subCategoryId, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ExperienceHighlightResponseDto> getFeaturedByLocationAndSubCategory(Long locationId, Long subCategoryId, String pincodeCode) {
+        List<ExperienceHighlightResponseDto> cached = imageFlowCacheService.getExperienceListFeaturedByLocationAndSubCategory(locationId, subCategoryId);
+        List<ExperienceHighlightResponseDto> highlights;
+        if (cached != null) {
+            logger.info("Cache hit: experience list key exp:list:location:{}:subcategory:{}:featured:v2:all", locationId, subCategoryId);
+            highlights = cached;
+        } else {
+            logger.info("Cache miss: experience list key exp:list:location:{}:subcategory:{}:featured:v2:all; loading from DB", locationId, subCategoryId);
+
+            List<Experience> experiences = experienceDao.findFeaturedByLocationAndSubCategory(locationId, subCategoryId);
+            if (experiences == null || experiences.isEmpty())
+                return new ArrayList<>();
+            highlights = experiences.stream()
+                    .map(ExperienceBeanMapper::mapEntityToHighlightDto)
+                    .collect(Collectors.toList());
+            enrichHighlightsWithCardImages(highlights);
+            imageFlowCacheService.putExperienceListFeaturedByLocationAndSubCategory(locationId, subCategoryId, highlights);
+        }
+        return filterByPincode(highlights, pincodeCode);
+    }
+
     /**
      * {@inheritDoc}
      *
