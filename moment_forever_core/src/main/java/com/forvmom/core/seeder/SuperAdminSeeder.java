@@ -54,7 +54,7 @@ public class SuperAdminSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        String superAdminEmail = "superadmin@cherishx.com";
+        String superAdminEmail = "admin@fm.com";
 
         if (!authUserDao.existsByUsername(superAdminEmail)) {
             logger.info("Creating default SUPER_ADMIN user: {}", superAdminEmail);
@@ -64,7 +64,7 @@ public class SuperAdminSeeder implements CommandLineRunner {
 
             RegisterRequestDto request = new RegisterRequestDto();
             request.setEmail(superAdminEmail);
-            request.setPassword("SuperAdmin@123"); // Strong password
+            request.setPassword("test123"); // Strong password
             request.setFullName("Super Administrator");
             request.setRoleId(superAdminRole.getId());
             request.setPreferredCity("Headquarters");

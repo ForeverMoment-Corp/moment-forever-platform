@@ -1,4 +1,5 @@
 package com.forvmom.common.helpers;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -12,6 +13,12 @@ public class BookingOutboxPayload {
     private final String pincode;
     private final List<Long> addonMapperIds;
     private final LocalDate bookingDate;
+    /**
+     * Client-quoted grand total from the create-booking request, if the caller
+     * sent one. {@code null} for older payloads — downstream stages then fall
+     * back to the server-derived total.
+     */
+    private final BigDecimal requestedAmount;
 
     private BookingOutboxPayload(Builder builder) {
         this.userId = builder.userId;
@@ -22,6 +29,7 @@ public class BookingOutboxPayload {
                 ? Collections.emptyList()
                 : Collections.unmodifiableList(new ArrayList<>(builder.addonMapperIds));
         this.bookingDate = builder.bookingDate;
+        this.requestedAmount = builder.requestedAmount;
     }
 
     public Long getUserId() {
@@ -48,6 +56,10 @@ public class BookingOutboxPayload {
         return bookingDate;
     }
 
+    public BigDecimal getRequestedAmount() {
+        return requestedAmount;
+    }
+
     public static class Builder {
 
         private Long userId;
@@ -56,6 +68,7 @@ public class BookingOutboxPayload {
         private String pincode;
         private List<Long> addonMapperIds;
         private LocalDate bookingDate;
+        private BigDecimal requestedAmount;
 
         public Builder withUserId(Long userId) {
             this.userId = userId;
@@ -84,6 +97,11 @@ public class BookingOutboxPayload {
 
         public Builder withBookingDate(LocalDate bookingDate) {
             this.bookingDate = bookingDate;
+            return this;
+        }
+
+        public Builder withRequestedAmount(BigDecimal requestedAmount) {
+            this.requestedAmount = requestedAmount;
             return this;
         }
 

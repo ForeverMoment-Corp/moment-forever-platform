@@ -7,6 +7,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -29,6 +30,14 @@ public class BookingReservation {
 
     @Column(name = "guest_count", nullable = false)
     private Integer guestCount;
+
+    /**
+     * Client-quoted grand total captured at booking time. Nullable: older
+     * bookings and callers without a UI quote carry {@code null}, in which case
+     * downstream stages fall back to the server-derived total.
+     */
+    @Column(name = "requested_amount", precision = 10, scale = 2)
+    private BigDecimal requestedAmount;
 
     @Column(name = "status", nullable = false, length = 20)
     private String status = STATUS_RESERVED;
@@ -74,6 +83,14 @@ public class BookingReservation {
 
     public void setGuestCount(Integer guestCount) {
         this.guestCount = guestCount;
+    }
+
+    public BigDecimal getRequestedAmount() {
+        return requestedAmount;
+    }
+
+    public void setRequestedAmount(BigDecimal requestedAmount) {
+        this.requestedAmount = requestedAmount;
     }
 
     public String getStatus() {

@@ -1,6 +1,7 @@
 package com.forvmom.common.dto.request;
 
 import jakarta.validation.constraints.*;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -51,6 +52,18 @@ public class BookingRequestDto {
      */
     private List<Long> addonMapperIds;
 
+    /**
+     * Client-quoted grand total for the whole booking (all guests, add-ons
+     * included), as shown to the customer in the UI.
+     *
+     * <p>Optional. When present it is persisted through the outbox payload and
+     * the {@code booking-requested} event, and downstream stages prefer it over
+     * the server-derived total. When absent (or for older callers), the
+     * server-derived pricing chain remains the source of truth (fallback).
+     */
+    @DecimalMin(value = "0.00", message = "Amount must not be negative")
+    private BigDecimal amount;
+
     // ── Getters & Setters ────────────────────────────────────────────────────
 
     public Long getTimeSlotMapperId() {
@@ -91,5 +104,13 @@ public class BookingRequestDto {
 
     public void setAddonMapperIds(List<Long> addonMapperIds) {
         this.addonMapperIds = addonMapperIds;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
     }
 }

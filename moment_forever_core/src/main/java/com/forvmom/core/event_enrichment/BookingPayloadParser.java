@@ -6,6 +6,7 @@ import com.forvmom.common.helpers.BookingOutboxPayload;
 import com.forvmom.data.entities.BookingOutbox;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -35,6 +36,9 @@ public class BookingPayloadParser {
                     .withGuestCount(toInt(payload.get("guestCount")))
                     .withBookingDate(LocalDate.parse((String) payload.get("bookingDate")))
                     .withPincode((String) payload.get("pincode"))
+                    // Absent (or null) in payloads written before the client
+                    // amount existed — downstream falls back to derived pricing.
+                    .withRequestedAmount(toBigDecimal(payload.get("requestedAmount")))
                     .withAddonMapperIds(payload.get("addonMapperIds") != null
                             ? toListLong((List<?>) payload.get("addonMapperIds"))
                             : Collections.emptyList())
@@ -71,6 +75,23 @@ public class BookingPayloadParser {
         }
 
         return Integer.parseInt(value.toString());
+    }
+
+    private BigDecimal toBigDecimal(Object value) {
+        if (value == null) {
+            return null;
+        }
+
+        if (value instanceof Number) {
+            return new BigDecimal(value.toString());
+        }
+
+        String text = value.toString().trim();
+        if (text.isEmpty()) {
+            return null;
+        }
+
+        return new BigDecimal(text);
     }
 
     private List<Long> toListLong(List<?> rawValues) {

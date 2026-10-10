@@ -18,11 +18,18 @@ public class BookingPricingCalculator {
     private static final String PRICING_LEVEL_BASE = "BASE";
     private static final String PRICING_LEVEL_LOCATION = "LOCATION";
     private static final String PRICING_LEVEL_SLOT = "SLOT";
+    /**
+     * Pricing level recorded when the grand total comes from the UI-quoted
+     * amount instead of the server-derived chain below.
+     */
+    private static final String PRICING_LEVEL_CLIENT = "CLIENT";
 
     public BookingPricingSummary calculate(
             BookingOutboxPayload payload,
             BookingSnapshotBundle snapshots
     ) {
+        // Server-derived pricing chain (kept as-is; it is the fallback when
+        // the create-booking request carried no client amount).
         BigDecimal resolvedPrice = snapshots
                 .getExperienceSnapshot()
                 .getBasePrice();
@@ -58,6 +65,15 @@ public class BookingPricingCalculator {
         }
 
         BigDecimal grandTotal = totalAmount.add(addonsTotal);
+
+        // Client-quoted amount wins when present: it is the total the UI showed
+        // the customer (guests × price + add-ons). Per-person/total/add-on
+        // breakdowns above stay derived for audit; only the charged grand total
+        // and its provenance level are overridden.
+        if (payload.getRequestedAmount() != null) {
+            grandTotal = payload.getRequestedAmount();
+            pricingLevel = PRICING_LEVEL_CLIENT;
+        }
 
         return new BookingPricingSummary.Builder()
                 .withResolvedPricePerPerson(resolvedPrice)

@@ -93,6 +93,7 @@ public class BookingCreationTransactionService {
         reservation.setSlotMapperId(bookingRequest.getTimeSlotMapperId());
         reservation.setBookingDate(bookingRequest.getBookingDate());
         reservation.setGuestCount(bookingRequest.getGuestCount());
+        reservation.setRequestedAmount(bookingRequest.getAmount());
         reservation.setStatus(BookingReservation.STATUS_RESERVED);
         bookingReservationDao.save(reservation);
 
@@ -172,6 +173,10 @@ public class BookingCreationTransactionService {
                         : List.of());
         payload.put("pincode", bookingRequest.getPincode());
         payload.put("bookingDate", bookingRequest.getBookingDate().toString());
+        // Client-quoted grand total; null when the caller did not send one
+        // (older rows predate this key — the parser treats a missing key as null
+        // and downstream stages fall back to the derived total).
+        payload.put("requestedAmount", bookingRequest.getAmount());
 
         try {
             return objectMapper.writeValueAsString(payload);
