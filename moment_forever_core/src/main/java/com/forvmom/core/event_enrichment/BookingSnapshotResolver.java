@@ -51,7 +51,7 @@ public class BookingSnapshotResolver {
 
     @Transactional
     public BookingSnapshotBundle resolve(BookingOutboxPayload payload) {
-        UserSnapshot userSnapshot = resolveUser(payload.getUserId());
+        UserSnapshot userSnapshot = resolveUser(payload.getUserId(), payload.getUsername());
 
         SlotSnapshot slotSnapshot = resolveSlot(payload.getSlotMapperId());
 
@@ -77,10 +77,15 @@ public class BookingSnapshotResolver {
                 .build();
     }
 
-    private UserSnapshot resolveUser(Long userId) {
+    private UserSnapshot resolveUser(Long userId, String username) {
         UserSnapshot cachedUser = catalogCache.getUserSnapshot(userId);
 
         if (cachedUser != null) {
+            // Snapshots cached before the username field existed carry null;
+            // backfill from the request-time value in the outbox payload.
+            if (cachedUser.getUsername() == null) {
+                cachedUser.setUsername(username);
+            }
             return cachedUser;
         }
 
@@ -95,7 +100,8 @@ public class BookingSnapshotResolver {
         return new UserSnapshot(
                 user.getId(),
                 user.getEmail(),
-                user.getFullName()
+                user.getFullName(),
+                username
         );
     }
 

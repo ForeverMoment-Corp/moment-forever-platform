@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -59,7 +60,7 @@ class BookingControllerAdminTest {
     @Test
     void firstRequestReturnsAcceptedResponseWithoutReplayHeader() throws Exception {
         String body = "{\"code\":200,\"status\":\"SUCCESS\",\"bookingId\":\"MFB-100\"}";
-        when(orchestrationService.initiateBooking(any(), eq(7L), eq("key-1")))
+        when(orchestrationService.initiateBooking(any(), eq(7L), any(), eq("key-1")))
                 .thenReturn(new BookingInitiationResult("MFB-100", 202, body, false));
 
         mockMvc.perform(post("/admin/bookings")
@@ -76,7 +77,7 @@ class BookingControllerAdminTest {
     @Test
     void replayReturnsStoredStatusAndBodyWithReplayHeader() throws Exception {
         String body = "{\"code\":200,\"status\":\"SUCCESS\",\"bookingId\":\"MFB-100\"}";
-        when(orchestrationService.initiateBooking(any(), eq(7L), eq("key-1")))
+        when(orchestrationService.initiateBooking(any(), eq(7L), any(), eq("key-1")))
                 .thenReturn(new BookingInitiationResult("MFB-100", 202, body, true));
 
         mockMvc.perform(post("/admin/bookings")
@@ -92,7 +93,7 @@ class BookingControllerAdminTest {
 
     @Test
     void keyReuseForDifferentRequestReturnsStructuredConflict() throws Exception {
-        when(orchestrationService.initiateBooking(any(), eq(7L), eq("key-1")))
+        when(orchestrationService.initiateBooking(any(), eq(7L), any(), eq("key-1")))
                 .thenThrow(new IdempotencyConflictException("different request"));
 
         mockMvc.perform(post("/admin/bookings")
@@ -108,7 +109,7 @@ class BookingControllerAdminTest {
 
     @Test
     void activeOwnerReturnsConflictWithRetryAfter() throws Exception {
-        when(orchestrationService.initiateBooking(any(), eq(7L), eq("key-1")))
+        when(orchestrationService.initiateBooking(any(), eq(7L), any(), eq("key-1")))
                 .thenThrow(new IdempotencyRequestInProgressException("still in progress"));
 
         mockMvc.perform(post("/admin/bookings")
@@ -121,5 +122,23 @@ class BookingControllerAdminTest {
                 .andExpect(header().string("Retry-After", "1"))
                 .andExpect(content().json(
                         "{\"code\":409,\"status\":\"CONFLICT\",\"msg\":\"still in progress\"}"));
+    }
+
+    @Test
+    void gatewayUsernameHeaderIsForwardedToOrchestration() throws Exception {
+        String body = "{\"code\":200,\"status\":\"SUCCESS\",\"bookingId\":\"MFB-100\"}";
+        when(orchestrationService.initiateBooking(any(), eq(7L), eq("admin@example.com"), eq("key-1")))
+                .thenReturn(new BookingInitiationResult("MFB-100", 202, body, false));
+
+        mockMvc.perform(post("/admin/bookings")
+                        .header("X-User-Id", "7")
+                        .header("X-User-Roles", "USER")
+                        .header("X-User-Name", "admin@example.com")
+                        .header("Idempotency-Key", "key-1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(REQUEST_BODY))
+                .andExpect(status().isAccepted());
+
+        verify(orchestrationService).initiateBooking(any(), eq(7L), eq("admin@example.com"), eq("key-1"));
     }
 }

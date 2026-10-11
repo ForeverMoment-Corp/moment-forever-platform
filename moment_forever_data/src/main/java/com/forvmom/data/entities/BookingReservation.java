@@ -32,6 +32,14 @@ public class BookingReservation {
     private Integer guestCount;
 
     /**
+     * Caller username (gateway JWT subject) captured at booking time. Nullable:
+     * absent on direct calls and older rows. Kept for audit/support next to the
+     * numeric {@code userId} in every booking state (created/confirmed/failed).
+     */
+    @Column(name = "username", length = 150)
+    private String username;
+
+    /**
      * Client-quoted grand total captured at booking time. Nullable: older
      * bookings and callers without a UI quote carry {@code null}, in which case
      * downstream stages fall back to the server-derived total.
@@ -83,6 +91,14 @@ public class BookingReservation {
 
     public void setGuestCount(Integer guestCount) {
         this.guestCount = guestCount;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public BigDecimal getRequestedAmount() {

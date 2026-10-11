@@ -67,7 +67,8 @@ public class BookingCreationTransactionService {
     public BookingInitiationResult reserveCapacityAndCreateOutbox(
             BookingRequestIdempotencyClaim claim,
             BookingRequestDto bookingRequest,
-            Long userId
+            Long userId,
+            String username
     ) {
         // TODO:since we are checking the idempotency of request in BookingOrchestrationService, we can remove this check here and also remove the claim parameter from this method.
         // Lock the idempotency row so only the current request owner can create data.
@@ -94,6 +95,7 @@ public class BookingCreationTransactionService {
         reservation.setBookingDate(bookingRequest.getBookingDate());
         reservation.setGuestCount(bookingRequest.getGuestCount());
         reservation.setRequestedAmount(bookingRequest.getAmount());
+        reservation.setUsername(username);
         reservation.setStatus(BookingReservation.STATUS_RESERVED);
         bookingReservationDao.save(reservation);
 
@@ -105,7 +107,7 @@ public class BookingCreationTransactionService {
         outbox.setSchemaVersion(EVENT_SCHEMA_VERSION);
         outbox.setOccurredAt(Instant.now());
         outbox.setCorrelationId(bookingReferenceId);
-        outbox.setPayload(buildMinimalPayload(userId, bookingRequest));
+        outbox.setPayload(buildMinimalPayload(userId, username, bookingRequest));
         outbox.setStatus(BookingOutbox.STATUS_PENDING);
         outbox.setRetryCount(0);
         outbox.setCreatedAt(LocalDateTime.now());
@@ -161,9 +163,12 @@ public class BookingCreationTransactionService {
     /**
      * Stores only the fields needed to build the outgoing booking event later.
      */
-    private String buildMinimalPayload(Long userId, BookingRequestDto bookingRequest) {
+    private String buildMinimalPayload(Long userId, String username, BookingRequestDto bookingRequest) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("userId", userId);
+        // Caller username from the gateway (JWT subject); null when absent
+        // (direct calls, older rows) — downstream treats it as optional.
+        payload.put("username", username);
         payload.put("slotMapperId", bookingRequest.getTimeSlotMapperId());
         payload.put("guestCount", bookingRequest.getGuestCount());
         payload.put(

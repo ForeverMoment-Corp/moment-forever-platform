@@ -61,6 +61,7 @@ class BookingCreationTransactionServiceTest {
         request.setGuestCount(4);
         request.setAddonMapperIds(List.of(3L));
         request.setPincode("560001");
+        request.setAmount(new java.math.BigDecimal("499.00"));
 
         BookingRequestIdempotency idempotency = new BookingRequestIdempotency();
         idempotency.setStatus(BookingRequestIdempotency.STATUS_IN_PROGRESS);
@@ -72,7 +73,7 @@ class BookingCreationTransactionServiceTest {
 
         BookingInitiationResult result =
                 bookingCreationTransactionService.reserveCapacityAndCreateOutbox(
-                        claim, request, 7L);
+                        claim, request, 7L, "admin@example.com");
 
         verify(slotInventoryService).reserveCapacity(100L, bookingDate, 4);
         ArgumentCaptor<BookingReservation> reservationCaptor =
@@ -88,6 +89,13 @@ class BookingCreationTransactionServiceTest {
         assertEquals("2026-08-20", payload.get("bookingDate").asText());
         assertEquals(100L, payload.get("slotMapperId").asLong());
         assertEquals(4, payload.get("guestCount").asInt());
+        assertEquals("admin@example.com", payload.get("username").asText());
+        // JSON numbers round-trip through Double, so compare by value, not scale.
+        assertEquals(0, new java.math.BigDecimal("499.00")
+                .compareTo(payload.get("requestedAmount").decimalValue()));
+        assertEquals(new java.math.BigDecimal("499.00"),
+                reservationCaptor.getValue().getRequestedAmount());
+        assertEquals("admin@example.com", reservationCaptor.getValue().getUsername());
         assertNotNull(outbox.getEventId());
         assertEquals("moment-forever-core", outbox.getEventProducer());
         assertEquals(1, outbox.getSchemaVersion());

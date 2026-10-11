@@ -39,10 +39,14 @@ public class BookingOrchestrationService {
 
     /**
      * Starts a booking once, or returns the response saved by the first request.
+     *
+     * @param username caller username from the gateway (may be null); captured
+     *                 into the reservation and the booking-requested event
      */
     public BookingInitiationResult initiateBooking(
            BookingRequestDto bookingRequest,
            Long userId,
+           String username,
            String idempotencyKey
     ) {
         // The same logical request always produces the same fingerprint.
@@ -64,7 +68,7 @@ public class BookingOrchestrationService {
         try {
            // Reservation, outbox row, and replay response are saved together.
            result = bookingCreationRetryService.reserveCapacityAndCreateOutbox(
-                   claimResult.claim(), bookingRequest, userId);
+                   claimResult.claim(), bookingRequest, userId, username);
         } catch (RuntimeException failure) {
            try {
                idempotencyCoordinator.markFailed(claimResult.claim(), failure);

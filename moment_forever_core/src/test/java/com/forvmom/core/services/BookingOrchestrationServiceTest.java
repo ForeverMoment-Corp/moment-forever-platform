@@ -52,13 +52,13 @@ class BookingOrchestrationServiceTest {
                 new BookingInitiationResult("MFB-100", 202, "{\"bookingId\":\"MFB-100\"}", false);
         when(coordinator.claimOrReplay("CREATE_BOOKING", 7L, "key-1", "fingerprint"))
                 .thenReturn(new BookingRequestIdempotencyClaimResult(claim, null));
-        when(bookingCreationRetryService.reserveCapacityAndCreateOutbox(claim, request, 7L))
+        when(bookingCreationRetryService.reserveCapacityAndCreateOutbox(claim, request, 7L, "admin"))
                 .thenReturn(accepted);
 
-        BookingInitiationResult result = service.initiateBooking(request, 7L, "key-1");
+        BookingInitiationResult result = service.initiateBooking(request, 7L, "admin", "key-1");
 
         assertEquals(accepted, result);
-        verify(bookingCreationRetryService).reserveCapacityAndCreateOutbox(claim, request, 7L);
+        verify(bookingCreationRetryService).reserveCapacityAndCreateOutbox(claim, request, 7L, "admin");
         verify(enrichmentTask).enrich("MFB-100");
     }
 
@@ -69,11 +69,11 @@ class BookingOrchestrationServiceTest {
         when(coordinator.claimOrReplay("CREATE_BOOKING", 7L, "key-1", "fingerprint"))
                 .thenReturn(new BookingRequestIdempotencyClaimResult(null, replay));
 
-        BookingInitiationResult result = service.initiateBooking(request, 7L, "key-1");
+        BookingInitiationResult result = service.initiateBooking(request, 7L, "admin", "key-1");
 
         assertEquals(replay, result);
         verify(bookingCreationRetryService, never())
-                .reserveCapacityAndCreateOutbox(claim, request, 7L);
+                .reserveCapacityAndCreateOutbox(claim, request, 7L, "admin");
         verify(enrichmentTask, never()).enrich("MFB-100");
     }
 
@@ -88,21 +88,21 @@ class BookingOrchestrationServiceTest {
                 .thenReturn(
                         new BookingRequestIdempotencyClaimResult(claim, null),
                         new BookingRequestIdempotencyClaimResult(retryClaim, null));
-        when(bookingCreationRetryService.reserveCapacityAndCreateOutbox(claim, request, 7L))
+        when(bookingCreationRetryService.reserveCapacityAndCreateOutbox(claim, request, 7L, "admin"))
                 .thenThrow(capacityFailure);
         when(bookingCreationRetryService.reserveCapacityAndCreateOutbox(
-                retryClaim, request, 7L))
+                retryClaim, request, 7L, "admin"))
                 .thenReturn(accepted);
 
         assertThrows(
                 IllegalStateException.class,
-                () -> service.initiateBooking(request, 7L, "key-1"));
-        BookingInitiationResult retry = service.initiateBooking(request, 7L, "key-1");
+                () -> service.initiateBooking(request, 7L, "admin", "key-1"));
+        BookingInitiationResult retry = service.initiateBooking(request, 7L, "admin", "key-1");
 
         assertEquals("MFB-101", retry.bookingReferenceId());
         verify(coordinator).markFailed(claim, capacityFailure);
         verify(enrichmentTask).enrich("MFB-101");
         verify(bookingCreationRetryService, times(1))
-                .reserveCapacityAndCreateOutbox(retryClaim, request, 7L);
+                .reserveCapacityAndCreateOutbox(retryClaim, request, 7L, "admin");
     }
 }

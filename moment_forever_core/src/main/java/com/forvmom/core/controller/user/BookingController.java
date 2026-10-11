@@ -45,6 +45,8 @@ public class BookingController {
      *
      * @param userId            caller identity injected by the API gateway
      * @param roles             caller roles injected by the API gateway
+     * @param username          caller username (JWT subject) injected by the gateway;
+     *                          persisted with the booking, may be absent on direct calls
      * @param idempotencyKey    required caller-chosen retry identity
      * @param bookingRequestDto the booking request payload
      * @return HTTP 202 with the generated booking reference ID
@@ -56,6 +58,7 @@ public class BookingController {
     public ResponseEntity<String> createBooking(
             @RequestHeader("X-User-Id") Long userId,
             @RequestHeader("X-User-Roles") String roles,
+            @RequestHeader(value = "X-User-Name", required = false) String username,
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
             @Valid @RequestBody BookingRequestDto bookingRequestDto) {
 
@@ -63,7 +66,7 @@ public class BookingController {
             throw new IllegalArgumentException("Idempotency-Key header is required");
         }
         BookingInitiationResult result =
-                bookingOrchestrationService.initiateBooking(bookingRequestDto, userId, idempotencyKey);
+                bookingOrchestrationService.initiateBooking(bookingRequestDto, userId, username, idempotencyKey);
         ResponseEntity.BodyBuilder response = ResponseEntity
                 .status(result.httpStatus())
                 .contentType(MediaType.APPLICATION_JSON);

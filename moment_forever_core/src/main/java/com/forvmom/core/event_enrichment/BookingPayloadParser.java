@@ -32,6 +32,9 @@ public class BookingPayloadParser {
 
             return new BookingOutboxPayload.Builder()
                     .withUserId(toLong(payload.get("userId")))
+                    // Absent in payloads written before the gateway username was
+                    // captured — downstream treats it as optional.
+                    .withUsername((String) payload.get("username"))
                     .withSlotMapperId(toLong(payload.get("slotMapperId")))
                     .withGuestCount(toInt(payload.get("guestCount")))
                     .withBookingDate(LocalDate.parse((String) payload.get("bookingDate")))

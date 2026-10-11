@@ -48,12 +48,12 @@ class BookingCreationRetryServiceTest {
         doThrow(new ObjectOptimisticLockingFailureException("SlotInventory", 1L))
                 .doReturn(result)
                 .when(bookingCreationTransactionService)
-                .reserveCapacityAndCreateOutbox(claim, request, 7L);
+                .reserveCapacityAndCreateOutbox(claim, request, 7L, "admin");
 
-        service.reserveCapacityAndCreateOutbox(claim, request, 7L);
+        service.reserveCapacityAndCreateOutbox(claim, request, 7L, "admin");
 
         verify(bookingCreationTransactionService, times(2))
-                .reserveCapacityAndCreateOutbox(claim, request, 7L);
+                .reserveCapacityAndCreateOutbox(claim, request, 7L, "admin");
     }
 
     @Test
@@ -68,12 +68,12 @@ class BookingCreationRetryServiceTest {
         doThrow(conflict)
                 .doReturn(result)
                 .when(bookingCreationTransactionService)
-                .reserveCapacityAndCreateOutbox(claim, request, 7L);
+                .reserveCapacityAndCreateOutbox(claim, request, 7L, "admin");
 
-        service.reserveCapacityAndCreateOutbox(claim, request, 7L);
+        service.reserveCapacityAndCreateOutbox(claim, request, 7L, "admin");
 
         verify(bookingCreationTransactionService, times(2))
-                .reserveCapacityAndCreateOutbox(claim, request, 7L);
+                .reserveCapacityAndCreateOutbox(claim, request, 7L, "admin");
     }
 
     @Test
@@ -82,27 +82,27 @@ class BookingCreationRetryServiceTest {
                 new DataIntegrityViolationException("outbox constraint failed");
         doThrow(exception)
                 .when(bookingCreationTransactionService)
-                .reserveCapacityAndCreateOutbox(claim, request, 7L);
+                .reserveCapacityAndCreateOutbox(claim, request, 7L, "admin");
 
         assertThrows(
                 DataIntegrityViolationException.class,
-                () -> service.reserveCapacityAndCreateOutbox(claim, request, 7L));
+                () -> service.reserveCapacityAndCreateOutbox(claim, request, 7L, "admin"));
 
         verify(bookingCreationTransactionService)
-                .reserveCapacityAndCreateOutbox(claim, request, 7L);
+                .reserveCapacityAndCreateOutbox(claim, request, 7L, "admin");
     }
 
     @Test
     void stopsAfterThreeOptimisticLockConflicts() {
         doThrow(new ObjectOptimisticLockingFailureException("SlotInventory", 1L))
                 .when(bookingCreationTransactionService)
-                .reserveCapacityAndCreateOutbox(claim, request, 7L);
+                .reserveCapacityAndCreateOutbox(claim, request, 7L, "admin");
 
         assertThrows(
                 IllegalStateException.class,
-                () -> service.reserveCapacityAndCreateOutbox(claim, request, 7L));
+                () -> service.reserveCapacityAndCreateOutbox(claim, request, 7L, "admin"));
 
         verify(bookingCreationTransactionService, times(3))
-                .reserveCapacityAndCreateOutbox(claim, request, 7L);
+                .reserveCapacityAndCreateOutbox(claim, request, 7L, "admin");
     }
 }

@@ -8,6 +8,7 @@ import java.time.LocalDate;
 public class BookingOutboxPayload {
 
     private final Long userId;
+    private final String username;
     private final Long slotMapperId;
     private final Integer guestCount;
     private final String pincode;
@@ -22,6 +23,7 @@ public class BookingOutboxPayload {
 
     private BookingOutboxPayload(Builder builder) {
         this.userId = builder.userId;
+        this.username = builder.username;
         this.slotMapperId = builder.slotMapperId;
         this.guestCount = builder.guestCount;
         this.pincode = builder.pincode;
@@ -34,6 +36,14 @@ public class BookingOutboxPayload {
 
     public Long getUserId() {
         return userId;
+    }
+
+    /**
+     * Caller username captured at request time; {@code null} when the gateway
+     * did not supply one (direct calls) or for older payloads.
+     */
+    public String getUsername() {
+        return username;
     }
 
     public Long getSlotMapperId() {
@@ -63,6 +73,7 @@ public class BookingOutboxPayload {
     public static class Builder {
 
         private Long userId;
+        private String username;
         private Long slotMapperId;
         private Integer guestCount;
         private String pincode;
@@ -72,6 +83,11 @@ public class BookingOutboxPayload {
 
         public Builder withUserId(Long userId) {
             this.userId = userId;
+            return this;
+        }
+
+        public Builder withUsername(String username) {
+            this.username = username;
             return this;
         }
 

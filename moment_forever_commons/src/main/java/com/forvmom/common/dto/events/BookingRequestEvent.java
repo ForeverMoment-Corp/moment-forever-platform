@@ -36,6 +36,11 @@ public class BookingRequestEvent extends BaseEvent {
     private Long userId;
     private String userEmail;
     private String userFullName;
+    /**
+     * Caller username (gateway JWT subject) captured at booking time.
+     * {@code null} when the gateway did not supply one.
+     */
+    private String username;
 
     // ── Experience snapshot ───────────────────────────────────────────────────
 
@@ -136,6 +141,14 @@ public class BookingRequestEvent extends BaseEvent {
 
     public void setUserFullName(String userFullName) {
         this.userFullName = userFullName;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public Long getExperienceId() {

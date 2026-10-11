@@ -70,6 +70,7 @@ public class BookingRequestEventBuilder {
         event.setUserId(snapshots.getUserSnapshot().getUserId());
         event.setUserEmail(snapshots.getUserSnapshot().getEmail());
         event.setUserFullName(snapshots.getUserSnapshot().getFullName());
+        event.setUsername(snapshots.getUserSnapshot().getUsername());
 
         event.setExperienceId(snapshots.getExperienceSnapshot().getId());
         event.setExperienceName(snapshots.getExperienceSnapshot().getName());

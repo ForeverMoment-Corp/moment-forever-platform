@@ -40,7 +40,8 @@ public class BookingCreationRetryService {
     public BookingInitiationResult reserveCapacityAndCreateOutbox(
             BookingRequestIdempotencyClaim claim,
             BookingRequestDto bookingRequest,
-            Long userId
+            Long userId,
+            String username
     ) {
         RuntimeException lastConflict = null;
 
@@ -49,7 +50,7 @@ public class BookingCreationRetryService {
             try {
                 //TODO: in this method below, we are also storing the idempotency request record, so name change of this method required
                 return bookingCreationTransactionService.reserveCapacityAndCreateOutbox(
-                        claim, bookingRequest, userId);
+                        claim, bookingRequest, userId, username);
             } catch (ObjectOptimisticLockingFailureException exception) {
                 lastConflict = exception;
                 logger.debug(
