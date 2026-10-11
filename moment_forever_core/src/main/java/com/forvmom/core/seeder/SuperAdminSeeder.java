@@ -53,6 +53,7 @@ public class SuperAdminSeeder implements CommandLineRunner {
      */
     @Override
     @Transactional
+    // TODO: decide good credentials and superadmin email
     public void run(String... args) throws Exception {
         String superAdminEmail = "admin@fm.com";
 
