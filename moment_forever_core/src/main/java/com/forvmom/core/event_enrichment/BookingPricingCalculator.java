@@ -73,6 +73,7 @@ public class BookingPricingCalculator {
         if (payload.getRequestedAmount() != null) {
             grandTotal = payload.getRequestedAmount();
             pricingLevel = PRICING_LEVEL_CLIENT;
+
         }
 
         return new BookingPricingSummary.Builder()
