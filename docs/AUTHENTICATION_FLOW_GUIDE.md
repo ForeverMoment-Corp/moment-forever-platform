@@ -221,3 +221,63 @@ When auth issues happen, check in this order:
 5. **Refresh token state** — was the token revoked?
 
 That sequence matches how the code now resolves and authenticates users.
+
+## 11. Booking enrichment bug (auth id vs app id) — root cause and fix
+
+### Symptom
+
+For some users (especially Google sign-in users), booking request creation returns
+202 but enrichment fails before Kafka publication with a "User not found" style
+error during snapshot resolution.
+
+### Why this happened
+
+The platform keeps two id domains:
+
+- `auth_users.id` (security identity)
+- `application_users.id` (business/profile identity)
+
+Previously, JWT claim `userId` always carried `auth_users.id`.
+Gateway forwarded that as `X-User-Id`.
+Booking enrichment used `X-User-Id` as `ApplicationUser` id and looked up:
+
+- `application_users.id = X-User-Id`
+
+That works only when both ids are accidentally equal. When they differ, user
+lookup fails.
+
+### Why it often looked fine for normal register/login
+
+In many datasets, auth row and app row were created back-to-back, so their
+numeric ids often matched by chance. This is not guaranteed.
+
+Social sign-in/link/reactivation flows make id divergence much more likely, so
+the bug surfaced there first.
+
+### Implemented fix
+
+Token and gateway contracts now carry both identities explicitly:
+
+- JWT claims:
+  - `authUserId` (security identity)
+  - `appUserId` (business identity)
+  - `userId` kept for compatibility and now aligned to `appUserId` when present
+- Gateway headers:
+  - `X-Auth-User-Id`
+  - `X-App-User-Id`
+  - `X-User-Id` kept for compatibility and set to app id
+
+Platform gateway-header auth now prefers `X-App-User-Id` (falls back to
+`X-User-Id` for older tokens/gateways).
+
+Enrichment also includes a temporary compatibility fallback: if user lookup by
+`application_users.id` misses, it retries by `application_users.auth_user_id`.
+This keeps older tokens functional during rollout.
+
+### Best-practice rule going forward
+
+- Use `authUserId` for auth/RBAC/audit.
+- Use `appUserId` for domain/business operations (bookings, profile-linked
+  enrichments, etc.).
+
+This preserves clean separation and prevents cross-domain id confusion.

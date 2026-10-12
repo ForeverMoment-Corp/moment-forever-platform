@@ -43,7 +43,8 @@ public class BookingControllerAdmin {
      * the same status and body with {@code Idempotency-Replayed: true}. Reusing
      * the key with a different request returns 409.
      *
-     * @param userId            caller identity injected by the API gateway
+     * @param userId            application-user identity injected by the API gateway
+     * @param authUserId        auth-user identity injected by the gateway (audit use)
      * @param roles             caller roles injected by the API gateway
      * @param idempotencyKey    required caller-chosen retry identity
      * @param bookingRequestDto the booking request payload
@@ -55,6 +56,7 @@ public class BookingControllerAdmin {
             + "Requires USER authentication.")
     public ResponseEntity<String> createBooking(
             @RequestHeader("X-User-Id") Long userId,
+            @RequestHeader(value = "X-Auth-User-Id", required = false) Long authUserId,
             @RequestHeader("X-User-Roles") String roles,
             @RequestHeader(value = "X-User-Name", required = false) String username,
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,

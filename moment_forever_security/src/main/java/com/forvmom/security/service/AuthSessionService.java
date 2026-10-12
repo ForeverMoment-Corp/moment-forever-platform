@@ -40,7 +40,7 @@ public class AuthSessionService {
         authUser.updateLastLogin();
         authUserDao.update(authUser);
 
-        String jwtToken = jwtService.generateToken(authUser);
+        String jwtToken = jwtService.generateToken(authUser, applicationUser);
         String refreshToken = jwtService.generateAndSaveRefreshToken(authUser);
 
         AuthResponse authResponse = new AuthResponse();
@@ -48,6 +48,7 @@ public class AuthSessionService {
         authResponse.setRefreshToken(refreshToken);
         authResponse.setExpiresIn(jwtExpirationMillis / 1000);
         authResponse.setUserId(authUser.getId());
+        authResponse.setAppUserId(applicationUser != null ? applicationUser.getId() : null);
         authResponse.setEmail(authUser.getUsername());
         authResponse.setFullName(applicationUser != null ? applicationUser.getFullName() : null);
         authResponse.setRoleIds(authUser.getUserRoles().stream()

@@ -23,7 +23,10 @@ public class GatewayHeaderAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        String userId = request.getHeader("X-User-Id");
+        // Gateway forwards both ids. For business/domain operations we prefer the
+        // application-user id.
+        String appUserId = request.getHeader("X-App-User-Id");
+        String userId = appUserId != null ? appUserId : request.getHeader("X-User-Id");
         String roles = request.getHeader("X-User-Roles");
         String username = request.getHeader("X-User");
         if (username == null) {

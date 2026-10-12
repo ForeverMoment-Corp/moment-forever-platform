@@ -1,5 +1,6 @@
 package com.forvmom.common.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -60,8 +61,18 @@ public class BookingRequestDto {
      * the {@code booking-requested} event, and downstream stages prefer it over
      * the server-derived total. When absent (or for older callers), the
      * server-derived pricing chain remains the source of truth (fallback).
+     *
+     * <p>Bound from either the {@code amount} or {@code requestedAmount} JSON key:
+     * the customer frontend sends {@code requestedAmount} (see
+     * {@code moment-forever-customer-u}'s {@code BookingRequest.requestedAmount}),
+     * while {@code amount} is kept as the primary/internal name. Without this
+     * alias the frontend's field was silently dropped (unknown property), which
+     * meant the backend always fell back to server-derived pricing and ignored
+     * any UI-applied coupon discount — i.e. the gateway charged more than the
+     * price actually shown to the customer.
      */
     @DecimalMin(value = "0.00", message = "Amount must not be negative")
+    @JsonAlias("requestedAmount")
     private BigDecimal amount;
 
     // ── Getters & Setters ────────────────────────────────────────────────────

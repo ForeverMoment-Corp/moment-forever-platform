@@ -90,6 +90,12 @@ public class BookingSnapshotResolver {
         }
 
         ApplicationUser user = userDao.findById(userId);
+        if (user == null) {
+            // Backward compatibility: older JWTs and older gateway behavior forwarded
+            // auth-user id in X-User-Id. In that case, resolve the profile by
+            // application_users.auth_user_id.
+            user = userDao.findByAuthUserId(userId).orElse(null);
+        }
 
         if (user == null) {
             throw new IllegalStateException("User not found: " + userId);

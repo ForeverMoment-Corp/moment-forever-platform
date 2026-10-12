@@ -1,8 +1,10 @@
 package com.forvmom.security.service;
 
 import com.forvmom.common.errorhandler.CustomAuthException;
+import com.forvmom.data.dao.ApplicationUserDao;
 import com.forvmom.data.dao.auth.AuthUserDao;
 import com.forvmom.data.dao.auth.RefreshTokenDao;
+import com.forvmom.data.entities.ApplicationUser;
 import com.forvmom.data.entities.auth.AuthUser;
 import com.forvmom.data.entities.auth.AuthUserRole;
 import com.forvmom.data.entities.auth.RefreshToken;
@@ -34,6 +36,7 @@ import java.util.stream.Collectors;
 public class JwtService {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtService.class);
+    private final ApplicationUserDao applicationUserDao;
     private final AuthUserDao authUserDao;
     private final RefreshTokenDao refreshTokenDao;
 
@@ -47,7 +50,8 @@ public class JwtService {
     private Long refreshExpiration; // in milliseconds (e.g., 604800000 = 7 days)
 
     @Autowired
-    public JwtService(AuthUserDao authUserDao, RefreshTokenDao refreshTokenDao) {
+    public JwtService(ApplicationUserDao applicationUserDao, AuthUserDao authUserDao, RefreshTokenDao refreshTokenDao) {
+        this.applicationUserDao = applicationUserDao;
         this.authUserDao = authUserDao;
         this.refreshTokenDao = refreshTokenDao;
     }
@@ -64,14 +68,21 @@ public class JwtService {
      * @param authUser The authenticated user
      * @return JWT token string
      */
-    public String generateToken(AuthUser authUser) {
+    public String generateToken(AuthUser authUser, ApplicationUser applicationUser) {
         logger.debug("Generating JWT token for user: {}", authUser.getUsername());
 
         // Create claims (payload data)
         Map<String, Object> claims = new HashMap<>();
 
         // Add user info to token payload
-        claims.put("userId", authUser.getId());
+        // Keep backward compatibility by preserving userId while moving business
+        // operations to appUserId.
+        // userId is now the application-user id so downstream business flows map to
+        // application_users consistently.
+        Long resolvedAppUserId = applicationUser != null ? applicationUser.getId() : null;
+        claims.put("userId", resolvedAppUserId != null ? resolvedAppUserId : authUser.getId());
+        claims.put("authUserId", authUser.getId());
+        claims.put("appUserId", resolvedAppUserId);
         claims.put("username", authUser.getUsername());
         claims.put("externalUserId", authUser.getExternalUserId());
 
@@ -90,6 +101,14 @@ public class JwtService {
         claims.put("accountNonLocked", authUser.isAccountNonLocked());
 
         return buildToken(claims, authUser.getUsername(), jwtExpiration);
+    }
+
+    /**
+     * Compatibility overload for callers that only have an auth user.
+     */
+    public String generateToken(AuthUser authUser) {
+        ApplicationUser applicationUser = applicationUserDao.findByAuthUserId(authUser.getId()).orElse(null);
+        return generateToken(authUser, applicationUser);
     }
 
     /**
@@ -154,6 +173,26 @@ public class JwtService {
 
     public Long extractUserId(String token) {
         Claims claims = extractAllClaims(token);
+        return claims.get("userId", Long.class);
+    }
+
+    public Long extractAuthUserId(String token) {
+        Claims claims = extractAllClaims(token);
+        Long authUserId = claims.get("authUserId", Long.class);
+        if (authUserId != null) {
+            return authUserId;
+        }
+        // Older access tokens stored auth id in userId.
+        return claims.get("userId", Long.class);
+    }
+
+    public Long extractAppUserId(String token) {
+        Claims claims = extractAllClaims(token);
+        Long appUserId = claims.get("appUserId", Long.class);
+        if (appUserId != null) {
+            return appUserId;
+        }
+        // Older tokens do not have appUserId; userId could be auth id there.
         return claims.get("userId", Long.class);
     }
 
@@ -315,7 +354,8 @@ public class JwtService {
             // 7. Revoke OLD refresh token (rotation)
             storedToken.setRevoked(true);
             refreshTokenDao.save(storedToken);
-            String accessToken = generateToken(authUser);
+            ApplicationUser applicationUser = applicationUserDao.findByAuthUserId(authUser.getId()).orElse(null);
+            String accessToken = generateToken(authUser, applicationUser);
             String generatedRefreshToken = generateAndSaveRefreshToken(authUser);
 
             AuthResponse authResponse = new AuthResponse();
