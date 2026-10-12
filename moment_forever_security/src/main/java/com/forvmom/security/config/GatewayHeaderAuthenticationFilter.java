@@ -27,6 +27,7 @@ public class GatewayHeaderAuthenticationFilter extends OncePerRequestFilter {
         // application-user id.
         String appUserId = request.getHeader("X-App-User-Id");
         String userId = appUserId != null ? appUserId : request.getHeader("X-User-Id");
+        String authUserId = request.getHeader("X-Auth-User-Id");
         String roles = request.getHeader("X-User-Roles");
         String username = request.getHeader("X-User");
         if (username == null) {
@@ -47,10 +48,12 @@ public class GatewayHeaderAuthenticationFilter extends OncePerRequestFilter {
 
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
+                auth.setDetails(authUserId);
                 SecurityContextHolder.getContext().setAuthentication(auth);
             } catch (NumberFormatException e) {
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(userId, null, authorities);
+                auth.setDetails(authUserId);
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
         }

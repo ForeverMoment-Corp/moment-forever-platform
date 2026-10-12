@@ -274,6 +274,18 @@ Enrichment also includes a temporary compatibility fallback: if user lookup by
 `application_users.id` misses, it retries by `application_users.auth_user_id`.
 This keeps older tokens functional during rollout.
 
+`UserProfileService` now follows the same rule: resolve the current user by
+application id first (from gateway principal), then fall back to
+`auth_user_id` for backward compatibility.
+
+`SupportQueryService` now follows the same pattern for both submit/get-my
+queries: resolve by application id first, then fall back to `auth_user_id`.
+
+For auth-domain vendor flows, `VendorServiceImpl` now prefers
+`X-Auth-User-Id` propagated by gateway (stored on authentication details) so
+vendor self-service keeps using auth identity even when principal id represents
+application identity.
+
 ### Best-practice rule going forward
 
 - Use `authUserId` for auth/RBAC/audit.

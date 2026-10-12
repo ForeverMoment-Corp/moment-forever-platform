@@ -35,12 +35,11 @@ public class SupportQueryServiceImpl implements SupportQueryService {
 
     @Override
     @Transactional
-    public SupportQueryResponseDto submitQuery(SupportQueryRequestDto requestDto, Long authUserId) {
+    public SupportQueryResponseDto submitQuery(SupportQueryRequestDto requestDto, Long userId) {
         SupportQuery entity = new SupportQuery();
 
-        if (authUserId != null) {
-            ApplicationUser user = applicationUserDao.findByAuthUserId(authUserId)
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found: " + authUserId));
+        if (userId != null) {
+            ApplicationUser user = resolveApplicationUser(userId);
             entity.setApplicationUser(user);
             entity.setName(user.getFullName());
             entity.setEmail(user.getEmail());
@@ -92,10 +91,19 @@ public class SupportQueryServiceImpl implements SupportQueryService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<SupportQueryResponseDto> getMyQueries(Long authUserId) {
-        ApplicationUser user = applicationUserDao.findByAuthUserId(authUserId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + authUserId));
+    public List<SupportQueryResponseDto> getMyQueries(Long userId) {
+        ApplicationUser user = resolveApplicationUser(userId);
         return SupportQueryBeanMapper.mapEntitiesToDtos(supportQueryDao.findByApplicationUserId(user.getId()));
+    }
+
+    private ApplicationUser resolveApplicationUser(Long userId) {
+        ApplicationUser userByAppId = applicationUserDao.findById(userId);
+        if (userByAppId != null) {
+            return userByAppId;
+        }
+
+        return applicationUserDao.findByAuthUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
     }
 
     private boolean isBlank(String value) {

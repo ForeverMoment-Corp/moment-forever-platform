@@ -250,6 +250,7 @@ public class AuthService {
             registrationResponse.setAssignedBy("SYSTEM");
         }
         registrationResponse.setUserId(authUser.getId());
+        registrationResponse.setAppUserId(appUser.getId());
         registrationResponse.setEmail(authUser.getUsername());
         return registrationResponse;
     }

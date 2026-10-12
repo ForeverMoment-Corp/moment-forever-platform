@@ -58,7 +58,7 @@ public class UserProfileService {
     @Autowired
     private PasswordConfig passwordEncoder;
 
-    private Long extractAuthUserId(Object o) {
+    private Long extractPrincipalUserId(Object o) {
         if (o instanceof JwtUserDetails) {
             return ((JwtUserDetails) o).getId();
         } else if (o instanceof UserDetails) {
@@ -79,6 +79,26 @@ public class UserProfileService {
         return null;
     }
 
+    private ApplicationUser resolveCurrentApplicationUser(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new CustomAuthException("No authenticated user", HttpStatus.UNAUTHORIZED);
+        }
+
+        Object principal = authentication.getPrincipal();
+        Long principalUserId = extractPrincipalUserId(principal);
+        if (principalUserId == null) {
+            throw new CustomAuthException("Invalid principal type", HttpStatus.UNAUTHORIZED);
+        }
+
+        ApplicationUser userByAppId = applicationUserDao.findById(principalUserId);
+        if (userByAppId != null) {
+            return userByAppId;
+        }
+
+        return applicationUserDao.findByAuthUserId(principalUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User doesn't exist in System"));
+    }
+
     /**
      * Updates the authenticated user's profile.
      *
@@ -95,22 +115,7 @@ public class UserProfileService {
     @Transactional
     public AppUserResponseDto updateCurrentUserProfile(@Valid UserProfileRequestDto userProfileRequestDto) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new CustomAuthException("No authenticated user", HttpStatus.UNAUTHORIZED);
-        }
-
-        Object o = authentication.getPrincipal();
-        Long authUserId = extractAuthUserId(o);
-        if (authUserId == null) {
-            throw new CustomAuthException("Invalid principal type", HttpStatus.UNAUTHORIZED);
-        }
-
-        Optional<ApplicationUser> applicationUser = applicationUserDao.findByAuthUserId(authUserId);
-        if (applicationUser.isEmpty()) {
-            throw new ResourceNotFoundException("User doesn't exist in System");
-        }
-
-        ApplicationUser currentUser = applicationUser.get();
+        ApplicationUser currentUser = resolveCurrentApplicationUser(authentication);
         String normalizedEmail = normalizeEmail(userProfileRequestDto.getEmail());
 
         // Update fields
@@ -148,21 +153,8 @@ public class UserProfileService {
      */
     public AppUserResponseDto getCurrentUserProfile() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new CustomAuthException("No authenticated user", HttpStatus.UNAUTHORIZED);
-        }
-
-        Object o = authentication.getPrincipal();
-        Long authUserId = extractAuthUserId(o);
-        if (authUserId == null) {
-            throw new CustomAuthException("Invalid principal type", HttpStatus.UNAUTHORIZED);
-        }
-
-        Optional<ApplicationUser> applicationUser = applicationUserDao.findByAuthUserId(authUserId);
-        if (applicationUser.isEmpty()) {
-            throw new ResourceNotFoundException("User doesn't exist in System");
-        }
-        return ApplicationUserBeanMapper.mapEntityToDto(applicationUser.get());
+        ApplicationUser applicationUser = resolveCurrentApplicationUser(authentication);
+        return ApplicationUserBeanMapper.mapEntityToDto(applicationUser);
     }
 
     /**
@@ -180,28 +172,15 @@ public class UserProfileService {
      */
     public void deleteCurrentUserProfile(String password) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new CustomAuthException("No authenticated user", HttpStatus.UNAUTHORIZED);
-        }
-
-        Object o = authentication.getPrincipal();
-        Long authUserId = extractAuthUserId(o);
-        if (authUserId == null) {
-            throw new CustomAuthException("Invalid principal type", HttpStatus.UNAUTHORIZED);
-        }
-
-        Optional<ApplicationUser> applicationUser = applicationUserDao.findByAuthUserId(authUserId);
-        if (applicationUser.isEmpty()) {
-            throw new ResourceNotFoundException("User doesn't exist in System");
-        }
+        ApplicationUser applicationUser = resolveCurrentApplicationUser(authentication);
 
         // Verify password before deletion against AuthUser entity
-        AuthUser authUser = applicationUser.get().getAuthUser();
+        AuthUser authUser = applicationUser.getAuthUser();
         if (!passwordEncoder.passwordEncoder().matches(password, authUser.getPassword())) {
             throw new CustomAuthException("Invalid password", HttpStatus.UNAUTHORIZED);
         }
         revokeAllRefreshTokens(authUser.getId());
-        applicationUserDao.delete(applicationUser.get());
+        applicationUserDao.delete(applicationUser);
         authUserDao.delete(authUser);
     }
 
@@ -221,20 +200,8 @@ public class UserProfileService {
     @Transactional
     public void deactivateCurrentAccount(String refreshToken) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new CustomAuthException("No authenticated user", HttpStatus.UNAUTHORIZED);
-        }
-
-        Object o = authentication.getPrincipal();
-        Long authUserId = extractAuthUserId(o);
-        if (authUserId == null) {
-            throw new CustomAuthException("Invalid principal type", HttpStatus.UNAUTHORIZED);
-        }
-        Optional<ApplicationUser> applicationUser = applicationUserDao.findByAuthUserId(authUserId);
-        if (applicationUser.isEmpty()) {
-            throw new ResourceNotFoundException("User doesn't exist in System");
-        }
-        AuthUser authUser = applicationUser.get().getAuthUser();
+        ApplicationUser applicationUser = resolveCurrentApplicationUser(authentication);
+        AuthUser authUser = applicationUser.getAuthUser();
         authUser.setAccountNonLocked(false);
         authUserDao.update(authUser);
 

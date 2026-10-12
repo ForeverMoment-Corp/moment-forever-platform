@@ -82,13 +82,19 @@ public class AdminUserService {
     @Transactional
     public AdminAppUserResponseDto createUser(RegisterRequestDto request) {
         AuthResponse authResponse = authService.register(request);
-        // fetch the application user details using the auth user id
-        Optional<ApplicationUser> appUser = applicationUserDao.findByAuthUserId(authResponse.getUserId());
-        if (appUser.isEmpty()) {
-            throw new ResourceNotFoundException(
-                    "User created but profile not found for auth id: " + authResponse.getUserId());
+        ApplicationUser appUser = null;
+        if (authResponse.getAppUserId() != null) {
+            appUser = applicationUserDao.findById(authResponse.getAppUserId());
         }
-        AdminAppUserResponseDto res = ApplicationUserBeanMapper.mapEntityToAdminDto(appUser.get());
+        if (appUser == null) {
+            appUser = applicationUserDao.findByAuthUserId(authResponse.getUserId()).orElse(null);
+        }
+        if (appUser == null) {
+            throw new ResourceNotFoundException(
+                    "User created but profile not found for app/auth ids: "
+                            + authResponse.getAppUserId() + "/" + authResponse.getUserId());
+        }
+        AdminAppUserResponseDto res = ApplicationUserBeanMapper.mapEntityToAdminDto(appUser);
         // do populate whatever required from auth response(afermath)
         res.setCreatedBy(authResponse.getAssignedBy());
         return res;

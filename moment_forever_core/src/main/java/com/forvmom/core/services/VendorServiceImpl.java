@@ -253,8 +253,14 @@ public class VendorServiceImpl implements VendorService {
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new CustomAuthException("No authenticated user", HttpStatus.UNAUTHORIZED);
         }
-        Object o = authentication.getPrincipal();
-        Long authUserId = extractAuthUserId(o);
+
+        // Gateway forwards explicit auth identity separately from app identity.
+        // Prefer it to avoid id-domain confusion.
+        Long authUserId = extractAuthUserId(authentication.getDetails());
+        if (authUserId == null) {
+            Object o = authentication.getPrincipal();
+            authUserId = extractAuthUserId(o);
+        }
         if (authUserId == null) {
             throw new CustomAuthException("Invalid principal type", HttpStatus.UNAUTHORIZED);
         }
