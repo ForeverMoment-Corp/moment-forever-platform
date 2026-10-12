@@ -41,9 +41,9 @@ spring:
 
   # ================= DATABASE =================
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:5432/moment_forever_db?options=-c%20timezone%3DUTC
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:5435/moment_forever_db?options=-c%20timezone%3DUTC
     username: postgres
-    password: groote
+    password: postgres
     driver-class-name: org.postgresql.Driver
 
   # ================= HIKARI =================
