@@ -30,6 +30,8 @@ public interface ExperienceDao extends GenericDao<Experience, Long> {
 
     List<Experience> findBySubCategoryId(Long subCategoryId);
 
+    boolean existsBySubCategoryId(Long subCategoryId);
+
     List<Experience> findFeatured();
 
     List<Experience> findAllActive();

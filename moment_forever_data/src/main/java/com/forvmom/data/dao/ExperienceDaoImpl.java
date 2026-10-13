@@ -176,6 +176,16 @@ public class ExperienceDaoImpl extends GenericDaoImpl<Experience, Long> implemen
     }
 
     @Override
+    public boolean existsBySubCategoryId(Long subCategoryId) {
+        Long count = em.createQuery(
+                "SELECT COUNT(e) FROM Experience e WHERE e.subCategory.id = :subCategoryId",
+                Long.class)
+                .setParameter("subCategoryId", subCategoryId)
+                .getSingleResult();
+        return count != null && count > 0;
+    }
+
+    @Override
     public List<Experience> findFeatured() {
         return em.createQuery(
                 "SELECT DISTINCT e FROM Experience e " +

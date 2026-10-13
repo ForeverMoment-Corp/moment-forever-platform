@@ -41,6 +41,15 @@ public class SubCategoryDaoImpl extends GenericDaoImpl<SubCategory, Long>
     }
 
     @Override
+    public boolean existsByCategoryId(Long categoryId) {
+        Long count = em.createQuery(
+                "SELECT COUNT(s) FROM SubCategory s WHERE s.category.id = :categoryId",
+                Long.class).setParameter("categoryId", categoryId)
+                .getSingleResult();
+        return count != null && count > 0;
+    }
+
+    @Override
     public List<SubCategory> findBySlug(String slug) {
         return em.createQuery(
                 "from SubCategory where slug = :slug",

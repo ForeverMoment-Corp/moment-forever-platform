@@ -70,6 +70,8 @@ public interface SubCategoryService {
      *
      * @param id the sub-category identifier
      * @return {@code true} when the delete was issued
+     * @throws com.forvmom.common.errorhandler.ConflictException if experiences
+     *         are still attached to this sub-category
      */
     boolean deleteSubCategory(Long id);
 

@@ -1,10 +1,12 @@
 package com.forvmom.core.services;
 
+import com.forvmom.common.errorhandler.ConflictException;
 import com.forvmom.common.errorhandler.ResourceNotFoundException;
 import com.forvmom.common.dto.request.SubCategoryRequestDto;
 import com.forvmom.common.dto.response.SubCategoryResponseDto;
 import com.forvmom.core.mapper.SubCategoryBeanMapper;
 import com.forvmom.data.dao.CategoryDao;
+import com.forvmom.data.dao.ExperienceDao;
 import com.forvmom.data.dao.SubCategoryDao;
 import com.forvmom.data.entities.Category;
 import com.forvmom.data.entities.SubCategory;
@@ -38,6 +40,9 @@ public class SubCategoryServiceImpl implements SubCategoryService {
 
     @Autowired
     private CategoryDao categoryDao;
+
+    @Autowired
+    private ExperienceDao experienceDao;
 
     @Autowired
     private ReorderingService reorderingService;
@@ -223,6 +228,8 @@ public class SubCategoryServiceImpl implements SubCategoryService {
      * @return {@code true} once the delete has been issued
      * @throws ResourceNotFoundException if no sub-category exists with the given
      *                                   id
+     * @throws ConflictException         if experiences are still attached to
+     *                                   this sub-category
      */
     @Override
     @Transactional
@@ -230,6 +237,10 @@ public class SubCategoryServiceImpl implements SubCategoryService {
         SubCategory existing = subCategoryDao.findById(id);
         if (existing == null) {
             throw new ResourceNotFoundException("No SubCategory exists with id " + id);
+        }
+        if (experienceDao.existsBySubCategoryId(id)) {
+            throw new ConflictException(
+                    "Cannot delete sub-category id " + id + ": experiences are still attached to it");
         }
         subCategoryDao.delete(existing);
         return true;

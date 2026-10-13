@@ -1,12 +1,14 @@
 package com.forvmom.core.services;
 
 import com.forvmom.common.dto.request.ReorderRequestDto;
+import com.forvmom.common.errorhandler.ConflictException;
 import com.forvmom.common.errorhandler.ResourceNotFoundException;
 import com.forvmom.common.dto.request.CategoryRequestDto;
 import com.forvmom.common.dto.response.CategoryResponseDto;
 import com.forvmom.common.response.ApiResponse;
 import com.forvmom.core.mapper.CategoryBeanMapper;
 import com.forvmom.data.dao.CategoryDao;
+import com.forvmom.data.dao.SubCategoryDao;
 import com.forvmom.data.entities.Category;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -40,6 +42,9 @@ public class CategoryService extends ReorderingService {
 
     @Autowired
     private CategoryDao categoryDao;
+
+    @Autowired
+    private SubCategoryDao subCategoryDao;
 
     @Autowired
     private ReorderingService reorderingService;
@@ -138,12 +143,18 @@ public class CategoryService extends ReorderingService {
      * @param id the identifier of the category to delete
      * @return {@code true} once the delete has been issued
      * @throws ResourceNotFoundException if no category exists with the given id
+     * @throws ConflictException         if sub-categories are still attached to
+     *                                   this category
      */
     @Transactional
     public boolean deleteCategory(Long id) {
         Category existing = categoryDao.findById(id);
         if (existing == null) {
             throw new ResourceNotFoundException("No such category for given Id exist " + id);
+        }
+        if (subCategoryDao.existsByCategoryId(id)) {
+            throw new ConflictException(
+                    "Cannot delete category id " + id + ": sub-categories are still attached to it");
         }
         categoryDao.delete(existing);
         return true;
