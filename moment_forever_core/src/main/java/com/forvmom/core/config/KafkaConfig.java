@@ -76,6 +76,9 @@ public class KafkaConfig {
     @Value("${kafka.topics.booking-failed}")
     private String bookingFailedTopic;
 
+    @Value("${kafka.topics.booking-cancelled}")
+    private String bookingCancelledTopic;
+
     // ==================== PRODUCER CONFIG ====================
 
     /**
@@ -250,6 +253,21 @@ public class KafkaConfig {
     @Bean
     public NewTopic bookingFailedTopic() {
         return TopicBuilder.name(bookingFailedTopic)
+                .partitions(1)
+                .replicas(1)
+                .build();
+    }
+
+    /**
+     * Inbound topic on which the Booking service reports cancellations, driving
+     * inventory release in
+     * {@link com.forvmom.core.idempotency.event.consumer.BookingCancelledConsumer}.
+     *
+     * @return topic definition, auto-created on startup
+     */
+    @Bean
+    public NewTopic bookingCancelledTopic() {
+        return TopicBuilder.name(bookingCancelledTopic)
                 .partitions(1)
                 .replicas(1)
                 .build();

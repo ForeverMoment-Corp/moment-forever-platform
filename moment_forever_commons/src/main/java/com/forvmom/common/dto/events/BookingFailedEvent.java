@@ -15,7 +15,7 @@ import java.time.LocalDate;
  * IMPORTANT: {@code timeSlotMapperId}, {@code bookingDate}, and
  * {@code guestCount} identify the inventory row and quantity to release.
  */
-public class BookingFailedEvent extends BaseEvent {
+public class BookingFailedEvent extends BaseEvent implements InventoryReleaseEvent {
 
     private String bookingId;
     private Long userId;

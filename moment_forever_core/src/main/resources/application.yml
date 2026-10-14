@@ -162,6 +162,7 @@ kafka:
     booking-requested: topic_booking_requested
     booking-confirmed: topic_booking_confirmed
     booking-failed: topic_booking_failed
+    booking-cancelled: topic_booking_cancelled
 
 # ============================================
 # APPLICATION CUSTOM CONFIG
