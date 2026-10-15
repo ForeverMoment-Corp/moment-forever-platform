@@ -24,6 +24,7 @@ public class SubCategoryBeanMapper {
         entity.setName(dto.getName());
         entity.setDescription(dto.getDescription());
         entity.setSlug(dto.getSlug());
+        entity.setTag(dto.getTag());
         entity.setDisplayOrder(dto.getDisplayOrder());
         entity.setActive(dto.getIsActive());
 
@@ -45,6 +46,7 @@ public class SubCategoryBeanMapper {
         dto.setCategoryId(entity.getCategory().getId());
         dto.setDescription(entity.getDescription());
         dto.setSlug(entity.getSlug());
+        dto.setTag(entity.getTag());
         dto.setDisplayOrder(entity.getDisplayOrder());
         dto.setIsActive(entity.isActive());
 

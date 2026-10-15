@@ -19,6 +19,7 @@ public class SubCategoryRequestDto {
     private String slug;
     private String icon;
     private String thumbnailUrl;
+    private String tag;
 
     @Min(0)
     private Long displayOrder;
@@ -74,6 +75,14 @@ public class SubCategoryRequestDto {
 
     public void setThumbnailUrl(String thumbnailUrl) {
         this.thumbnailUrl = thumbnailUrl;
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
     }
 
     public Long getDisplayOrder() {

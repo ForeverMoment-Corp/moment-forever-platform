@@ -9,6 +9,7 @@ public class SubCategoryResponseDto extends NamedEntityDto implements CatalogMed
     private String slug;
     private String icon;
     private String thumbnailUrl;
+    private String tag;
     private Long mediaId;
     private String fileName;
     private String storageFileName;
@@ -60,6 +61,14 @@ public class SubCategoryResponseDto extends NamedEntityDto implements CatalogMed
 
     public void setThumbnailUrl(String thumbnailUrl) {
         this.thumbnailUrl = thumbnailUrl;
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
     }
 
     public Long getMediaId() {

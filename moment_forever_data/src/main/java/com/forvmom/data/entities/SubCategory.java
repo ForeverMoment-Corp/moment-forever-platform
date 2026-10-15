@@ -19,6 +19,9 @@ public class SubCategory extends NamedEntity {
     @Column(name = "slug")
     private String slug;
 
+    @Column(name = "tag", length = 100)
+    private String tag;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
@@ -48,6 +51,14 @@ public class SubCategory extends NamedEntity {
 
     public void setSlug(String slug) {
         this.slug = slug;
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
     }
 
     public void setCategory(Category category) {

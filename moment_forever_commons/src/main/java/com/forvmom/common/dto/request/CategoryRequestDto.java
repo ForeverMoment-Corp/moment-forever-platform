@@ -20,6 +20,7 @@ public class CategoryRequestDto {
     private String description;
     private String slug;
     private String icon;
+    private String tag;
 
     @Min(0)
     private Long displayOrder;
@@ -66,6 +67,14 @@ public class CategoryRequestDto {
 
     public void setIcon(String icon) {
         this.icon = icon;
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
     }
 
     public Long getDisplayOrder() {

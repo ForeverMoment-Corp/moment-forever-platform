@@ -22,6 +22,9 @@ public class Category extends NamedEntity {
     @Column(name = "slug")
     private String slug;
 
+    @Column(name = "tag", length = 100)
+    private String tag;
+
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<SubCategory> subCategories = new ArrayList<>();
 
@@ -50,6 +53,14 @@ public class Category extends NamedEntity {
 
     public void setSlug(String slug) {
         this.slug = slug;
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
     }
 
     public void setSubCategory(SubCategory subCategory) {

@@ -8,6 +8,7 @@ public class CategoryResponseDto extends NamedEntityDto implements CatalogMediaC
     private String description;
     private String slug;
     private String icon;
+    private String tag;
     private Long mediaId;
     private String fileName;
     private String storageFileName;
@@ -44,6 +45,14 @@ public class CategoryResponseDto extends NamedEntityDto implements CatalogMediaC
 
     public void setIcon(String icon) {
         this.icon = icon;
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
     }
 
     public Long getMediaId() {
